@@ -1,5 +1,6 @@
 # this code was created following the lecture notes found here: https://sgfin.github.io/files/notes/CS321_Grosse_Lecture_Notes.pdf
 import numpy as np
+import random
 
 # define activation functions
 def sigmoid(x): return 1/(1+np.exp(-x))
@@ -48,57 +49,44 @@ class Network:
         if include: return activation, weighted_inputs, activations
         else: return activation
 
-    # backward pass
+    # forward and backward pass
     def _backward(self, activation, label, learning_rate):
         # forward pass
         activation, weighted_inputs, activations = self._forward(activation, include=True)
-
-        # backward pass
-        deltas = []
-
-        # compute cost for forward pass for verbose output
+        # compute cost of forward pass for verbose output
         cost = self.cost(self.loss, activation, label)
-
+        # backward pass
         # final layer
-        delta_L = np.multiply(self.loss_prime(activation, label), self.activation_funcs[-1][1](weighted_inputs[-1]))
-        deltas.append(delta_L)
-        delta = delta_L.copy()
-
+        delta = np.multiply(self.loss_prime(activation, label), self.activation_funcs[-1][1](weighted_inputs[-1]))
         #remaining layers
-        for layer_index in range(self.num_layers-1, 1, -1):
-            product = np.dot(self.weights[layer_index+1].transpose(), delta)
-            delta = np.multiply(product, self.activation_funcs[layer_index][1](weighted_inputs[layer_index]))
-            deltas.append(delta)
-
-        deltas.reverse()
-        deltas = [-1,-1] + deltas
-
-        print('before:')
-        print(self.weights[-1])
-
-        # update weights of all layers
         for layer_index in range(self.num_layers, 1, -1):
-            # print(f'activations at layer {layer_index}')
-            # print(activations[layer_index-1])
-            transposed_activations = activations[layer_index-1].transpose()
-            # print(f'activations transposed at layer {layer_index}')
-            # print(transposed_activations)
-            weight_gradient = (np.dot(deltas[layer_index], transposed_activations)).mean(axis=1, keepdims=True)
-            bias_gradient = (deltas[layer_index]).mean(axis=1, keepdims=True)
-            self.weights[layer_index] -= learning_rate * weight_gradient
-            self.biases[layer_index] -= learning_rate * bias_gradient
+            # compute product before weights change
+            product = np.dot(self.weights[layer_index].transpose(), delta)
+            m = activations[layer_index-1].shape[1] # batch_size
+            weight_gradient = (np.dot(delta, activations[layer_index-1].transpose()))
+            bias_gradient = (delta).mean(axis=1, keepdims=True)
+            # print('begin')
+            # print(weight_gradient.shape)
+            # print(bias_gradient.shape)
+            # print(self.weights[layer_index].shape)
+            # print(self.biases[layer_index].shape)
+            # print('end')
+            self.weights[layer_index] -= (learning_rate/m) * weight_gradient
+            self.biases[layer_index] -= (learning_rate) * bias_gradient
+            # computes (layer_index - 1) delta vector
+            if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1][1](weighted_inputs[layer_index-1]))
             # print(f'norm of weight gradient at layer {layer_index} = {np.linalg.norm(weight_gradient)}')
 
-        # print('weight gradient:')
-        # print(weight_gradient.)
-        # print('after:')
-        # print(self.weights[-1])
         return cost
 
     def train(self, train_data, labels, batch_size, learning_rate, epochs, verbose=False):
         for epoch in range(epochs):
-            cost = self._backward(train_data, labels, learning_rate) # add batch_processing
-            if verbose: print(f'Cost after epoch {epoch} = {cost}') # this is probably no good
+            # TODO stochastic gradient descent (how to keep labels with right data)
+            for batch_index in range(train_data.shape[1]//batch_size):
+                train_data_batch = train_data[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
+                labels_batch = labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
+                cost = self._backward(train_data_batch, labels_batch, learning_rate)
+            if verbose and (epoch % 10) == 0: print(f'Cost after epoch {epoch} = {cost}') 
 
     def inference(self, data):
         return np.argmax(self._forward(data), axis=0, keepdims=True)
@@ -111,66 +99,109 @@ class Network:
         return correct_inferences/total_inferences
 
 if __name__ == '__main__':
-    # test network on MNIST dataset
-    from dataload import read_images_labels
+    mnist = True
+    iris = False
 
-    k = 10 # k-hot value
+    if mnist:
+        # test network on MNIST dataset
+        from dataload import read_images_labels
 
-    # load train
-    # training_images_filepath = './data/train-images-idx3-ubyte/train-images-idx3-ubyte'
-    # training_labels_filepath = './data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
-    training_images_filepath = '/home/jack/vault/software/mnist/data/train-images-idx3-ubyte/train-images-idx3-ubyte'
-    training_labels_filepath = '/home/jack/vault/software/mnist/data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
-    x_train, y_train = read_images_labels(training_images_filepath, training_labels_filepath)
+        k = 10 # k-hot value
 
-    # load test
-    # test_images_filepath = './data/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte'
-    # test_labels_filepath = './data/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-    test_images_filepath = '/home/jack/vault/software/mnist/data/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte'
-    test_labels_filepath = '/home/jack/vault/software/mnist/data/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-    x_test, y_test = read_images_labels(test_images_filepath, test_labels_filepath)
+        # load train
+        # training_images_filepath = './data/train-images-idx3-ubyte/train-images-idx3-ubyte'
+        # training_labels_filepath = './data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
+        training_images_filepath = '~/vault/software/mnist/data/train-images-idx3-ubyte/train-images-idx3-ubyte'
+        training_labels_filepath = '~/vault/software/mnist/data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
+        x_train, y_train = read_images_labels(training_images_filepath, training_labels_filepath)
 
-    # reformat data for model
-    x_train = x_train.transpose() * (1/255)
+        # load test
+        # test_images_filepath = './data/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte'
+        # test_labels_filepath = './data/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
+        test_images_filepath = '~/vault/software/mnist/data/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte'
+        test_labels_filepath = '~/vault/software/mnist/data/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
+        x_test, y_test = read_images_labels(test_images_filepath, test_labels_filepath)
 
-    # data dimension D
-    D = x_train.shape[0]
-    assert D==784
-    # number of training examples N
-    N = x_train.shape[1]
+        # reformat data for model
+        x_train = x_train.transpose() * (1/255)
 
-    # reformat data to k-hot format TODO: does numpy have a better way to do this?
-    temp_array = np.zeros((k, N))
-    for index,val in enumerate(y_train):
-        temp_array[val][index] = 1
-    y_train = temp_array
+        # data dimension D
+        D = x_train.shape[0]
+        assert D==784
+        # number of training examples N
+        N = x_train.shape[1]
 
-    x_test = x_test.transpose() * (1/255)
-    y_test = y_test.reshape(1,-1)
+        # reformat data to k-hot format TODO: does numpy have a better way to do this?
+        temp_array = np.zeros((k, N))
+        for index,val in enumerate(y_train):
+            temp_array[val][index] = 1
+        y_train = temp_array
 
-    print('MNIST data loaded in.')
+        x_test = x_test.transpose() * (1/255)
+        y_test = y_test.reshape(1,-1)
 
-    ## initialize network
-    network = Network(dims=(784,15,10), activation_funcs = [(sigmoid, sigmoid_prime),(sigmoid, sigmoid_prime)], loss=(mse_loss, mse_loss_prime), cost=cost, seed=1)
-    
-    # train on data with following parameters
-    epochs = 3
-    learning_rate = 0.01
-    batch_size = 1
-    
-    # x_train = x_train[:, [0]] # image of a 5
-    # y_train = y_train[:, [0]]
+        print('MNIST data loaded in.')
 
-    np.set_printoptions(suppress=True, linewidth = 150)
-    # print(np.array(x_train).reshape(28,28))
-    # print(f'This is a {y_train}')
+        ## initialize network
+        network = Network(dims=(784,15,10), activation_funcs = [(sigmoid, sigmoid_prime),(sigmoid, sigmoid_prime)], loss=(mse_loss, mse_loss_prime), cost=cost, seed=1)
+        
+        # train on data with following parameters
+        epochs = 3
+        learning_rate = 0.01
+        batch_size = 10
 
-    print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
-    network.train(train_data=x_train, labels=y_train, batch_size=batch_size, learning_rate=learning_rate, epochs=epochs, verbose=True)
-    print('Training completed.')
+        np.set_printoptions(suppress=True, linewidth = 150)
 
-    # print(network._forward(x_train))
+        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
+        network.train(train_data=x_train, labels=y_train, batch_size=batch_size, learning_rate=learning_rate, epochs=epochs, verbose=True)
+        print('Training completed.')
 
-    # test performance
-    accuracy = network.test(test_data=x_test, test_labels=y_test, verbose=True)
-    print(f'Training resulted in network with {accuracy*100 :.4}% accuracy.')
+        # test performance
+        accuracy = network.test(test_data=x_test, test_labels=y_test, verbose=True)
+        print(f'Training resulted in network with {accuracy*100 :.4}% accuracy.')
+
+    if iris:
+        # iris dataset
+        k = 3 # k-hot value
+
+        # csv columns are sepal_length,sepal_width,petal_length,petal_width,species
+        iris_dataset = np.genfromtxt('iris.csv', delimiter=',')
+
+        # randomize and split
+        np.random.seed(1)
+        np.random.shuffle(iris_dataset)
+
+        data = iris_dataset[:, range(4)]
+        labels = iris_dataset[:, [4]]
+
+        data = data.transpose()
+        labels = labels.transpose()
+
+        # split test and train data at 60%
+        total = iris_dataset.shape[0]
+        split = total//5 * 3
+        x_train, x_test = data[:, range(0, split)], data[:, range(split, total)]
+        labels_train, y_test = labels[:, range(0, split)], labels[:, range(split, total)]
+
+        labels_train = labels_train.transpose()
+        y_train = np.zeros((k, split))
+        for index, val in enumerate(labels_train): 
+            y_train[int(val[0])][index] = 1
+
+        ## initialize network
+        network = Network(dims=(4,5,3), activation_funcs = [(sigmoid, sigmoid_prime),(sigmoid, sigmoid_prime)], loss=(mse_loss, mse_loss_prime), cost=cost, seed=1)
+        
+        # train on data with following parameters
+        epochs = 300
+        learning_rate = 0.1
+        batch_size = 5
+
+        np.set_printoptions(suppress=True, linewidth = 150)
+
+        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
+        network.train(train_data=x_train, labels=y_train, batch_size=batch_size, learning_rate=learning_rate, epochs=epochs, verbose=True)
+        print('Training completed.')
+
+        # test performance
+        accuracy = network.test(test_data=x_test, test_labels=y_test, verbose=True)
+        print(f'Training resulted in network with {accuracy*100 :.4}% accuracy.')
