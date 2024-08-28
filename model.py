@@ -29,10 +29,10 @@ class Network:
     #   ie. (784, 15, 10) means a 784 x 15 array and a 15 x 10 array 
     # activations is tuple of tuples of vectorized activation functions and their derivatives
     # loss is a tuple of a loss function and its derivative that accepts an activation vector and label vector
-    def __init__(self, dims, activation_funcs, loss, cost, regularization_term, seed=None):
+    def __init__(self, dims, activation_funcs, loss, cost, weight_decay, seed=None):
         self.loss = loss[0]
         self.loss_prime = loss[1]
-        self.regularization_term = regularization_term
+        self.weight_decay = weight_decay
         self.cost = cost
         self.activation_funcs = [-1,-1] + activation_funcs # insert filler to align indexing with textbook
         if seed is not None: np.random.seed(seed)
@@ -58,15 +58,16 @@ class Network:
         else: return activation
 
     # forward and backward pass
-    def _backward(self, activation, label, learning_rate):
+    def _backward(self, activation, label, learning_rate, N=None):
         # forward pass
         activation, weighted_inputs, activations = self._forward(activation, include=True)
         # compute cost of forward pass for verbose output
-        n = 50000
+
         reg_term = 0
-        for weights_index, weights in enumerate(self.weights):
-            if weights_index > 1:
-                reg_term += ((self.regularization_term / (2*n)) * np.dot(weights, weights.transpose()).sum())
+        if N is not None: # if regularization
+            for weights_index, weights in enumerate(self.weights):
+                if weights_index > 1:
+                    reg_term += ((self.weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
         cost = self.cost(self.loss, activation, label) + reg_term
         # backward pass
         # final layer
@@ -79,12 +80,11 @@ class Network:
             weight_gradient = (np.dot(delta, activations[layer_index-1].transpose()))*(1/m)
             bias_gradient = (delta).mean(axis=1, keepdims=True)
             
-            self.weights[layer_index] = (1-(learning_rate*self.regularization_term/n))*self.weights[layer_index] - (learning_rate*weight_gradient)
+            self.weights[layer_index] = (self.weight_decay)*self.weights[layer_index] - (learning_rate*weight_gradient)
             self.biases[layer_index] -= (learning_rate)*bias_gradient
             # computes (layer_index - 1) delta vector
             if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1][1](weighted_inputs[layer_index-1]))
             # print(f'norm of weight gradient at layer {layer_index} = {np.linalg.norm(weight_gradient)}')
-
         return cost
 
     def train(self, train_data, labels, batch_size, learning_rate, epochs, verbose=False):
@@ -93,7 +93,7 @@ class Network:
             for batch_index in range(train_data.shape[1]//batch_size):
                 train_data_batch = train_data[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
                 labels_batch = labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
-                cost = self._backward(train_data_batch, labels_batch, learning_rate)
+                cost = self._backward(train_data_batch, labels_batch, learning_rate, N=train_data.shape[1])
             if verbose and (epoch % 10) == 0: print(f'Cost after epoch {epoch} = {cost}') 
 
     def inference(self, data):
@@ -113,9 +113,7 @@ if __name__ == '__main__':
     if mnist:
         # test network on MNIST dataset
         from dataload import read_images_labels
-
         k = 10 # k-hot value
-
         # load train
         training_images_filepath, training_labels_filepath = './data/train-images-idx3-ubyte/train-images-idx3-ubyte', './data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
         # training_images_filepath, training_labels_filepath = '~/vault/software/mnist/data/train-images-idx3-ubyte/train-images-idx3-ubyte', '~/vault/software/mnist/data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
@@ -140,20 +138,19 @@ if __name__ == '__main__':
         x_test, y_test = (x_test.transpose() * (1/255)), y_test.reshape(1,-1)
         print('MNIST data loaded in.')
 
+        learning_rate = 0.5
+        # train on data with following parameters
+        epochs = 90
+        batch_size = 10
         ## initialize network
         network = Network(
             dims=(784,30,10), \
             activation_funcs = [(sigmoid, sigmoid_prime),(sigmoid, sigmoid_prime)], 
             loss=(cross_entropy_loss, cross_entropy_loss_prime), 
             cost=cost, 
-            regularization_term=0.1,
+            weight_decay=(1-(5*learning_rate)/N),
             seed=1 
         )
-        
-        # train on data with following parameters
-        epochs = 90
-        learning_rate = 0.5
-        batch_size = 10
 
         np.set_printoptions(suppress=True, linewidth = 150)
 
