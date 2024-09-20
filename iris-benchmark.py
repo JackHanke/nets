@@ -69,4 +69,5 @@ if __name__ == '__main__':
         seed=1,
         version_num=0
     )
+    print(network.num_params())
     iris_benchmark(network=network, save=False)

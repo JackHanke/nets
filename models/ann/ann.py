@@ -114,3 +114,10 @@ class ArtificialNeuralNetwork:
         total_inferences = (test_labels.shape[1])
         if verbose: print(f'Correct inferences={correct_inferences} out of {total_inferences} total inferences.')
         return correct_inferences/total_inferences
+
+    def num_params(self):
+        num_parameters = 0
+        for weight_matrix in self.weights[2:]:
+            dims = weight_matrix.shape
+            num_parameters += (dims[0] * (dims[1]+1)) # +1 for biases 
+        return num_parameters

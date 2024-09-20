@@ -1,5 +1,4 @@
 # Neural Networks from Scratch
-
 This repo consists of academic exercises to create all facets of the following neural network architectures from scratch.
 - A multilayer perceptron, including
     - Regularization
@@ -22,7 +21,6 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 
 ## Project TODOs
 - Implement model save and load feature
-- Add num_params function
 - Add dropout
 - Add CNN
-- Adam Optimizer
+- Implement Adam Optimizer
