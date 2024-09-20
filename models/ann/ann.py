@@ -2,47 +2,54 @@
 import numpy as np
 import random
 from math import sqrt
+import json
 
-# define activation functions
-def sigmoid(x): return 1/(1+np.exp(-x))
-
-def sigmoid_prime(x): 
-    sig = sigmoid(x)
-    return sig * (1-sig)
-
-def relu(x): return x * (x > 0)
-def relu_prime(x): return 1. * (x > 0)
-
-# define loss & cost function and derivative
-def mse_loss(activation, label): return 0.5*(activation-label)**2
-def mse_loss_prime(activation, label): return (activation-label)
-
-def cross_entropy_loss(activation, label): return -1*(label*np.log(activation) + \
-    (np.ones(label.shape)-label)*np.log(np.ones(activation.shape)-activation))
-def cross_entropy_loss_prime(activation, label): return (activation - label)
-
-def cost(loss, activation, label): return np.average(loss(activation, label))
-# def cost(loss): return np.average(loss)
-
-class Network:
+class ArtificialNeuralNetwork:
     # dims is tuple of length >=2 that defines the model dimensions
     #   ie. (784, 15, 10) means a 784 x 15 array and a 15 x 10 array 
-    # activations is tuple of tuples of vectorized activation functions and their derivatives
+    # activations is tuple of activation function objects
     # loss is a tuple of a loss function and its derivative that accepts an activation vector and label vector
-    def __init__(self, dims, activation_funcs, loss, cost, weight_decay, seed=None):
-        self.loss = loss[0]
-        self.loss_prime = loss[1]
-        self.weight_decay = weight_decay
-        self.cost = cost
-        self.activation_funcs = [-1,-1] + activation_funcs # insert filler to align indexing with textbook
-        if seed is not None: np.random.seed(seed)
+    def __init__(self, dims, activation_funcs, loss, seed=None, version_num=0, load_loc=None):
+        if load_loc is None: 
+            if len(dims)-1 != len(activation_funcs): raise Exception("List of dimensions and activations do not match.")
+            self.num_layers = len(dims)
+            self.loss = loss
+            if seed is not None: np.random.seed(seed)
+            self.activation_funcs = [-1,-1] + activation_funcs # insert filler to align indexing with textbook
+            self.weights = [-1,-1] # insert filler to align indexing with textbook
+            self.biases = [-1,-1]
+            for dim_index in range(len(dims)-1):
+                self.weights.append(np.random.normal(loc=0, scale=1/sqrt(dims[0]), size=(dims[dim_index+1], dims[dim_index])))
+                self.biases.append(np.random.normal(loc=0, scale=1, size=(dims[dim_index+1], 1)))
+        else: 
+            with open(load_loc, 'r') as fin:
+                model_info_dict = json.load(fin)
+                self.weights
 
-        self.weights = [-1,-1] # insert filler to align indexing with textbook
-        self.biases = [-1,-1]
-        for dim_index in range(len(dims)-1):
-            self.weights.append(np.random.normal(loc=0, scale=1/sqrt(dims[0]), size=(dims[dim_index+1], dims[dim_index])))
-            self.biases.append(np.random.normal(loc=0, scale=1, size=(dims[dim_index+1], 1)))
-        self.num_layers = len(dims)
+        def save(self, loc):
+            if loc is None: save_loc_part = f'models/ann/ann-0'
+            else: save_loc_part = loc
+
+            with open(save_loc_part+'.json', 'w') as fout:
+                model_info_dict = {
+                    'weights':self.weights, 
+                    'biases':self.biases, 
+                    'activation_functs':self.activation_funcs,
+                    '':1
+                    }
+                json.dump(model_info_dict, fout)
+
+            with open(save_loc_part+'-params.json', 'w') as fout:
+                params_dict = {
+                    "version_num": self.version_num,
+                    "lmbda": self.lmbda,
+                    "n_step": self.n_step,
+                    "discounting_param": self.discounting_param,
+                    "reward_scale": self.reward_scale,
+                    "learning_rate": self.learning_rate,
+                    "state_value_function_approx": self.state_value_function_approx.name
+                }
+                json.dump(params_dict, fout)
 
     # forward pass
     def _forward(self, activation, include=False):
@@ -52,13 +59,13 @@ class Network:
             weighted_input = np.dot(self.weights[layer_index], activation) + \
                             np.dot(self.biases[layer_index], np.ones((1,activation.shape[1])))
             weighted_inputs.append(weighted_input)
-            activation = self.activation_funcs[layer_index][0](weighted_input)
+            activation = self.activation_funcs[layer_index].function(weighted_input)
             activations.append(activation)
         if include: return activation, weighted_inputs, activations
         else: return activation
 
     # forward and backward pass
-    def _backward(self, activation, label, learning_rate, N=None):
+    def _backward(self, activation, label, learning_rate, weight_decay, N=None):
         # forward pass
         activation, weighted_inputs, activations = self._forward(activation, include=True)
         # compute cost of forward pass for verbose output
@@ -67,11 +74,11 @@ class Network:
         if N is not None: # if regularization
             for weights_index, weights in enumerate(self.weights):
                 if weights_index > 1:
-                    reg_term += ((self.weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
-        cost = self.cost(self.loss, activation, label) + reg_term
+                    reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
+        cost = self.loss.cost(activation, label) + reg_term
         # backward pass
         # final layer
-        delta = np.multiply(self.loss_prime(activation, label), self.activation_funcs[-1][1](weighted_inputs[-1]))
+        delta = np.multiply(self.loss.loss_prime(activation, label), self.activation_funcs[-1].function_prime(weighted_inputs[-1]))
         #remaining layers
         for layer_index in range(self.num_layers, 1, -1):
             # compute product before weights change
@@ -80,20 +87,21 @@ class Network:
             weight_gradient = (np.dot(delta, activations[layer_index-1].transpose()))*(1/m)
             bias_gradient = (delta).mean(axis=1, keepdims=True)
             
-            self.weights[layer_index] = (self.weight_decay)*self.weights[layer_index] - (learning_rate*weight_gradient)
+            self.weights[layer_index] = (weight_decay)*self.weights[layer_index] - (learning_rate*weight_gradient)
             self.biases[layer_index] -= (learning_rate)*bias_gradient
             # computes (layer_index - 1) delta vector
-            if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1][1](weighted_inputs[layer_index-1]))
+            # if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1][1](weighted_inputs[layer_index-1]))
+            if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1].function_prime(weighted_inputs[layer_index-1]))
             # print(f'norm of weight gradient at layer {layer_index} = {np.linalg.norm(weight_gradient)}')
         return cost
 
-    def train(self, train_data, labels, batch_size, learning_rate, epochs, verbose=False):
+    def train(self, train_data, labels, batch_size, learning_rate, weight_decay, epochs, verbose=False):
         for epoch in range(epochs):
             # TODO stochastic gradient descent (how to keep labels with right data)
             for batch_index in range(train_data.shape[1]//batch_size):
                 train_data_batch = train_data[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
                 labels_batch = labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
-                cost = self._backward(train_data_batch, labels_batch, learning_rate, N=train_data.shape[1])
+                cost = self._backward(train_data_batch, labels_batch, learning_rate, weight_decay=weight_decay, N=train_data.shape[1])
             if verbose and (epoch % 10) == 0: print(f'Cost after epoch {epoch} = {cost}') 
 
     def inference(self, data):
@@ -107,8 +115,8 @@ class Network:
         return correct_inferences/total_inferences
 
 if __name__ == '__main__':
-    mnist = True
-    iris = False
+    mnist = False
+    iris = True
 
     if mnist:
         # test network on MNIST dataset
@@ -169,54 +177,4 @@ if __name__ == '__main__':
         accuracy = network.test(test_data=x_test, test_labels=y_test, verbose=True)
         print(f'Training resulted in network with {accuracy*100 :.4}% accuracy.')
 
-    if iris:
-        # iris dataset
-        k = 3 # k-hot value
-
-        # csv columns are sepal_length,sepal_width,petal_length,petal_width,species
-        iris_dataset = np.genfromtxt('iris.csv', delimiter=',')
-
-        # randomize and split
-        np.random.seed(1)
-        np.random.shuffle(iris_dataset)
-
-        data = iris_dataset[:, range(4)]
-        labels = iris_dataset[:, [4]]
-
-        data = data.transpose()
-        labels = labels.transpose()
-
-        # split test and train data at 60%
-        total = iris_dataset.shape[0]
-        split = total//5 * 3
-        x_train, x_test = data[:, range(0, split)], data[:, range(split, total)]
-        labels_train, y_test = labels[:, range(0, split)], labels[:, range(split, total)]
-
-        labels_train = labels_train.transpose()
-        y_train = np.zeros((k, split))
-        for index, val in enumerate(labels_train): 
-            y_train[int(val[0])][index] = 1
-
-        ## initialize network
-        network = Network(
-            dims=(4,5,3), \
-            activation_funcs = [(sigmoid, sigmoid_prime),(sigmoid, sigmoid_prime)], \
-            loss=(mse_loss, mse_loss_prime), \
-            cost=cost, \
-            seed=1
-        )
-        
-        # train on data with following parameters
-        epochs = 300
-        learning_rate = 0.1
-        batch_size = 5
-
-        np.set_printoptions(suppress=True, linewidth = 150)
-
-        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
-        network.train(train_data=x_train, labels=y_train, batch_size=batch_size, learning_rate=learning_rate, epochs=epochs, verbose=True)
-        print('Training completed.')
-
-        # test performance
-        accuracy = network.test(test_data=x_test, test_labels=y_test, verbose=True)
-        print(f'Training resulted in network with {accuracy*100 :.4}% accuracy.')
+    
