@@ -5,9 +5,7 @@ import numpy as np
 from time import time
 
 def iris_benchmark(network, save=False):
-    # iris dataset
     k = 3 # k-hot value
-
     # csv columns are sepal_length,sepal_width,petal_length,petal_width,species
     iris_dataset = np.genfromtxt('datasets/iris/iris.csv', delimiter=',')
 
@@ -63,8 +61,6 @@ def iris_benchmark(network, save=False):
     if save: network.save(loc=f'models/ann/iris-ann')
     return accuracy
 
-
-
 if __name__ == '__main__':
     network =ArtificialNeuralNetwork(
         dims=(4,5,3),
@@ -74,5 +70,3 @@ if __name__ == '__main__':
         version_num=0
     )
     iris_benchmark(network=network, save=False)
-
-

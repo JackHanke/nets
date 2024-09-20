@@ -11,6 +11,7 @@ class ArtificialNeuralNetwork:
     # loss is a tuple of a loss function and its derivative that accepts an activation vector and label vector
     def __init__(self, dims, activation_funcs, loss, seed=None, version_num=0, load_loc=None):
         if load_loc is None: 
+            self.version_num = str(version_num)
             if len(dims)-1 != len(activation_funcs): raise Exception("List of dimensions and activations do not match.")
             self.num_layers = len(dims)
             self.loss = loss
@@ -27,10 +28,10 @@ class ArtificialNeuralNetwork:
                 self.weights
 
         def save(self, loc):
-            if loc is None: save_loc_part = f'models/ann/ann-0'
+            if loc is None: save_loc_part = f'models/ann/ann'
             else: save_loc_part = loc
 
-            with open(save_loc_part+'.json', 'w') as fout:
+            with open(save_loc_part+self.version_num+'.json', 'w') as fout:
                 model_info_dict = {
                     'weights':self.weights, 
                     'biases':self.biases, 
@@ -113,68 +114,3 @@ class ArtificialNeuralNetwork:
         total_inferences = (test_labels.shape[1])
         if verbose: print(f'Correct inferences={correct_inferences} out of {total_inferences} total inferences.')
         return correct_inferences/total_inferences
-
-if __name__ == '__main__':
-    mnist = False
-    iris = True
-
-    if mnist:
-        # test network on MNIST dataset
-        from dataload import read_images_labels
-        k = 10 # k-hot value
-        # load train
-        training_images_filepath, training_labels_filepath = './data/train-images-idx3-ubyte/train-images-idx3-ubyte', './data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
-        # training_images_filepath, training_labels_filepath = '~/vault/software/mnist/data/train-images-idx3-ubyte/train-images-idx3-ubyte', '~/vault/software/mnist/data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
-        x_train, y_train = read_images_labels(training_images_filepath, training_labels_filepath)
-
-        # load test
-        test_images_filepath, test_labels_filepath = './data/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte', './data/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-        # test_images_filepath, test_labels_filepath = '~/vault/software/mnist/data/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte', '~/vault/software/mnist/data/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-        x_test, y_test = read_images_labels(test_images_filepath, test_labels_filepath)
-
-        # reformat data for model
-        x_train = x_train.transpose() * (1/255)
-
-        # number of training examples N
-        N = x_train.shape[1]
-
-        # reformat data to k-hot format TODO: does numpy have a better way to do this?
-        temp_array = np.zeros((k, N))
-        for index,val in enumerate(y_train):
-            temp_array[val][index] = 1
-        y_train = temp_array
-        x_test, y_test = (x_test.transpose() * (1/255)), y_test.reshape(1,-1)
-        print('MNIST data loaded in.')
-
-        learning_rate = 0.5
-        # train on data with following parameters
-        epochs = 90
-        batch_size = 10
-        ## initialize network
-        network = Network(
-            dims=(784,30,10), \
-            activation_funcs = [(sigmoid, sigmoid_prime),(sigmoid, sigmoid_prime)], 
-            loss=(cross_entropy_loss, cross_entropy_loss_prime), 
-            cost=cost, 
-            weight_decay=(1-(5*learning_rate)/N),
-            seed=1 
-        )
-
-        np.set_printoptions(suppress=True, linewidth = 150)
-
-        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
-        network.train(
-            train_data=x_train, 
-            labels=y_train, 
-            batch_size=batch_size, 
-            learning_rate=learning_rate, 
-            epochs=epochs, 
-            verbose=True
-        )
-        print('Training completed.')
-
-        # test performance
-        accuracy = network.test(test_data=x_test, test_labels=y_test, verbose=True)
-        print(f'Training resulted in network with {accuracy*100 :.4}% accuracy.')
-
-    
