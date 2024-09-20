@@ -21,6 +21,7 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 
 ## Project TODOs
 - Implement model save and load feature
+- Debug CrossEntropy class
 - Add dropout
 - Add CNN
 - Implement Adam Optimizer

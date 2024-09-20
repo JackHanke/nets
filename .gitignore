@@ -1,1 +1,6 @@
 __pychache__
+*.pyc
+
+datasets/mnist
+!datasets/mnist/dataload.py
+datasets/iris

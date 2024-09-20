@@ -14,6 +14,7 @@ class MSE:
     def cost(self, activation, label):
         return np.average(self.loss(activation, label))
 
+# TODO figure out why this doesnt work
 class CrossEntropy:
     def __init__(self):
         self.name='Cross Entropy'
@@ -23,7 +24,7 @@ class CrossEntropy:
             (np.ones(label.shape)-label)*np.log(np.ones(activation.shape)-activation))
     
     def loss_prime(self, activation, label):
-        return np.average(loss(activation, label))
+        return np.average(self.loss(activation, label))
 
     def cost(self, activation, label):
         return np.average(self.loss(activation, label))

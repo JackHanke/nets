@@ -4,16 +4,16 @@ from functions.loss_funcs import *
 import numpy as np
 from time import time
 
-def mnist_benchmark():
+def mnist_benchmark(network, save=False):
     from datasets.mnist.dataload import read_images_labels
     k = 10 # k-hot value
     # load train
-    training_images_filepath, training_labels_filepath = './data/train-images-idx3-ubyte/train-images-idx3-ubyte', './data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
+    training_images_filepath, training_labels_filepath = './datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte', './datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
     # training_images_filepath, training_labels_filepath = '~/vault/software/mnist/data/train-images-idx3-ubyte/train-images-idx3-ubyte', '~/vault/software/mnist/data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
     x_train, y_train = read_images_labels(training_images_filepath, training_labels_filepath)
 
     # load test
-    test_images_filepath, test_labels_filepath = './data/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte', './data/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
+    test_images_filepath, test_labels_filepath = './datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte', './datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
     # test_images_filepath, test_labels_filepath = '~/vault/software/mnist/data/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte', '~/vault/software/mnist/data/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
     x_test, y_test = read_images_labels(test_images_filepath, test_labels_filepath)
 
@@ -31,8 +31,8 @@ def mnist_benchmark():
     x_test, y_test = (x_test.transpose() * (1/255)), y_test.reshape(1,-1)
     print('MNIST data loaded in.')
 
-    learning_rate = 0.5
     # train on data with following parameters
+    learning_rate = 0.05
     epochs = 90
     batch_size = 10
 
@@ -58,10 +58,10 @@ def mnist_benchmark():
     return accuracy
 
 if __name__ == '__main__':
-    network = Network(
+    network = ArtificialNeuralNetwork(
         dims=(784,30,10),
         activation_funcs = [Sigmoid(),Sigmoid()], 
-        loss=(CrossEntropy()), 
+        loss=(MSE()), 
         seed=1,
         version_num=0
     )
