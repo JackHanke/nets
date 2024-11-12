@@ -21,6 +21,7 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 
 ## Project TODOs
 - Implement model save and load feature
+- differentiate between train mnist and benchmark mnist, same for iris
 - Debug CrossEntropy class
 - Add dropout
 - Add CNN
