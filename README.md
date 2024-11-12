@@ -13,8 +13,8 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 
 | Model Type | Arch | Regularization | Dropout | Epoch| Lr | Dataset | Acc |
 |-|-|-|-|-|-|-|-|
-| Ann | (784,) | L2 | 0 | 0 | 0 | MNIST | 0 |
-| Ann | (4,) | L2 | 0 | 0 | 0 | Iris | 0 |
+| ANN | (784,) | L2 | 0 | 0 | 0 | MNIST | 0 |
+| ANN | (4,) | L2 | 0 | 0 | 0 | Iris | 0 |
 
 ## Resources
 - [Introduction to Deep Learning](http://neuralnetworksanddeeplearning.com/) by Michael Nielsen
@@ -24,5 +24,5 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 - differentiate between train mnist and benchmark mnist, same for iris
 - Debug CrossEntropy class
 - Add dropout
-- Add CNN
 - Implement Adam Optimizer
+- Add CNN
