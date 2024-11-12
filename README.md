@@ -26,3 +26,4 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 - Add dropout
 - Implement Adam Optimizer
 - Add CNN
+- Diffusion!
