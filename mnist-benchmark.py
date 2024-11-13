@@ -1,6 +1,6 @@
 from models.ann.ann import ArtificialNeuralNetwork
-from functions.activation_funcs import *
-from functions.loss_funcs import *
+from functions.activation_funcs import Sigmoid
+from functions.loss_funcs import MSE
 import numpy as np
 from time import time
 
@@ -46,7 +46,7 @@ def mnist_benchmark(network, save=False):
 if __name__ == '__main__':
     network = ArtificialNeuralNetwork(
         dims=(784, 30, 10),
-        activation_funcs = [Sigmoid(),Sigmoid()], 
+        activation_funcs = [Sigmoid(), Sigmoid()], 
         loss=(MSE()), 
         seed=1,
         version_num=0

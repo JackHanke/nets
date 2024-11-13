@@ -20,17 +20,22 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 - [Introduction to Deep Learning](http://neuralnetworksanddeeplearning.com/) by Michael Nielsen
 
 ## Project TODOs
-- Implement model save and load feature
-- Debug CrossEntropy class
-- Add dropout
-- Implement Adam Optimizer
-- Add CNN
-- Diffusion!
-    - Following [this](https://www.youtube.com/watch?v=zc5NTeJbk-k&t=29s) video
+- ANN
+    - Implement model save and load feature
+    - Debug CrossEntropy class
+    - Add dropout
+    - Implement Adam Optimizer
+- CNN
+    - Everything
+- Diffusion Model
+    - Follow [this](https://www.youtube.com/watch?v=zc5NTeJbk-k&t=29s) video
     - Conditional image generation with a diffusion model from scratch on mnist
         - Train with classifier free guidance for better performance
-    - For linkedin post:
-        - Generative AI from scratch! I made a diffusion model using classifier free guidance to do conditional image generation, in this case drawing handwritten digits for a given digit. Diffusion models are a part of modern image generators like Stable Diffusion and DALLE. Diffusion models work by learning to predict added noise to an image TODO
+    - For Linkedin post:
+        - I wrote an image generator from scratch! This program learns to draw numbers after looking at pictures of other drawings of numbers (LeCun's MNIST). 
+        
+        This is specifically a diffusion model using classifier free guidance, which learns to predict a given image's true pixels after noise is added. The learned network is then used to predict data of a given label and noise array, effectively generating new images. This is one of the techniques used in modern image generators like Stable Diffusion and DALLE.
+
         - For viz, have header with "Please draw a __.", and have it draw 1738 (ay).
 
 
