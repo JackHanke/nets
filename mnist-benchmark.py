@@ -4,51 +4,37 @@ from functions.loss_funcs import *
 import numpy as np
 from time import time
 
+from datasets.mnist.dataload import get_mnist_data
+
 def mnist_benchmark(network, save=False):
-    from datasets.mnist.dataload import read_images_labels
-    k = 10 # k-hot value
-    # load train
-    training_images_filepath, training_labels_filepath = './datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte', './datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
-    # training_images_filepath, training_labels_filepath = '~/vault/software/mnist/data/train-images-idx3-ubyte/train-images-idx3-ubyte', '~/vault/software/mnist/data/train-labels-idx1-ubyte/train-labels-idx1-ubyte'
-    x_train, y_train = read_images_labels(training_images_filepath, training_labels_filepath)
-
-    # load test
-    test_images_filepath, test_labels_filepath = './datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte', './datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-    # test_images_filepath, test_labels_filepath = '~/vault/software/mnist/data/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte', '~/vault/software/mnist/data/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-    x_test, y_test = read_images_labels(test_images_filepath, test_labels_filepath)
-
-    # reformat data for model
-    x_train = x_train.transpose() * (1/255)
-
-    # number of training examples N
-    N = x_train.shape[1]
-
-    # reformat data to k-hot format TODO: does numpy have a better way to do this?
-    temp_array = np.zeros((k, N))
-    for index,val in enumerate(y_train):
-        temp_array[val][index] = 1
-    y_train = temp_array
-    x_test, y_test = (x_test.transpose() * (1/255)), y_test.reshape(1,-1)
+    x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
+        train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
+        train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
+        test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
+        test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
+    )
     print('MNIST data loaded in.')
 
     # train on data with following parameters
     learning_rate = 0.05
-    epochs = 90
+    epochs = 25
     batch_size = 10
 
-    np.set_printoptions(suppress=True, linewidth = 150)
-
     print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
+    start = time()
     network.train(
         train_data=x_train, 
-        labels=y_train, 
+        train_labels=y_train,
+        valid_data=x_valid,
+        valid_labels=y_valid,
         batch_size=batch_size, 
         learning_rate=learning_rate, 
-        weight_decay=(1-(5*learning_rate)/N),
+        weight_decay=(1-(5*learning_rate)/(x_train.shape[1])),
         epochs=epochs, 
-        verbose=True
+        verbose=True,
+        plot_learning=False
     )
-    print('Training completed.')
+    print(f'Training completed in {((time()-start)/60):.4f} minutes.')
 
     # test performance
     accuracy = network.test(test_data=x_test, test_labels=y_test, verbose=True)
@@ -59,10 +45,10 @@ def mnist_benchmark(network, save=False):
 
 if __name__ == '__main__':
     network = ArtificialNeuralNetwork(
-        dims=(784,30,10),
+        dims=(784, 30, 10),
         activation_funcs = [Sigmoid(),Sigmoid()], 
         loss=(MSE()), 
         seed=1,
         version_num=0
     )
-    mnist_benchmark(network=network, save=False)
+    acc = mnist_benchmark(network=network, save=False)

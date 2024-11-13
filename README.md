@@ -21,9 +21,19 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 
 ## Project TODOs
 - Implement model save and load feature
-- differentiate between train mnist and benchmark mnist, same for iris
 - Debug CrossEntropy class
 - Add dropout
 - Implement Adam Optimizer
 - Add CNN
 - Diffusion!
+    - Following [this](https://www.youtube.com/watch?v=zc5NTeJbk-k&t=29s) video
+    - Conditional image generation with a diffusion model from scratch on mnist
+        - Train with classifier free guidance for better performance
+    - For linkedin post:
+        - Generative AI from scratch! I made a diffusion model using classifier free guidance to do conditional image generation, in this case drawing handwritten digits for a given digit. Diffusion models are a part of modern image generators like Stable Diffusion and DALLE. Diffusion models work by learning to predict added noise to an image TODO
+        - For viz, have header with "Please draw a __.", and have it draw 1738 (ay).
+
+
+
+
+

@@ -1,8 +1,9 @@
-# this code was created following the lecture notes found here: https://sgfin.github.io/files/notes/CS321_Grosse_Lecture_Notes.pdf
+# this code closely follows the textbook http://neuralnetworksanddeeplearning.com/
 import numpy as np
 import random
 from math import sqrt
 import json
+import matplotlib.pyplot as plt
 
 class ArtificialNeuralNetwork:
     # dims is tuple of length >=2 that defines the model dimensions
@@ -76,23 +77,41 @@ class ArtificialNeuralNetwork:
             m = activations[layer_index-1].shape[1] # batch_size
             weight_gradient = (np.dot(delta, activations[layer_index-1].transpose()))*(1/m)
             bias_gradient = (delta).mean(axis=1, keepdims=True)
-            
             self.weights[layer_index] = (weight_decay)*self.weights[layer_index] - (learning_rate*weight_gradient)
             self.biases[layer_index] -= (learning_rate)*bias_gradient
             # computes (layer_index - 1) delta vector
-            # if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1][1](weighted_inputs[layer_index-1]))
             if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1].function_prime(weighted_inputs[layer_index-1]))
-            # print(f'norm of weight gradient at layer {layer_index} = {np.linalg.norm(weight_gradient)}')
         return cost
 
-    def train(self, train_data, labels, batch_size, learning_rate, weight_decay, epochs, verbose=False):
+    def train(self, train_data, train_labels, valid_data, valid_labels, batch_size, learning_rate, weight_decay, epochs, verbose=False, plot_learning=False):
+        train_cost_history, valid_cost_history = [], []
+        N = train_data.shape[1]
         for epoch in range(epochs):
             # TODO stochastic gradient descent (how to keep labels with right data)
             for batch_index in range(train_data.shape[1]//batch_size):
                 train_data_batch = train_data[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
-                labels_batch = labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
-                cost = self._backward(train_data_batch, labels_batch, learning_rate, weight_decay=weight_decay, N=train_data.shape[1])
-            if verbose and (epoch % 10) == 0: print(f'Cost after epoch {epoch} = {cost}') 
+                labels_batch = train_labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
+                train_cost = self._backward(train_data_batch, labels_batch, learning_rate, weight_decay=weight_decay, N=N)
+            train_cost_history.append(train_cost)
+            # validation performance
+            validation_inferences = self._forward(activation=valid_data)
+            reg_term = 0
+            for weights_index, weights in enumerate(self.weights):
+                if weights_index > 1: reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
+            validation_cost = self.loss.cost(validation_inferences, valid_labels) + reg_term
+            valid_cost_history.append(validation_cost)
+            if verbose and (epoch % 5) == 0: 
+                print(f'Training cost after epoch {epoch} = {train_cost}') 
+                print(f'Validation cost after epoch {epoch} = {validation_cost}') 
+        
+        if plot_learning: # plot learning curves
+            plt.plot([i for i in range(1, epochs+1)], train_cost_history, label=f'Train')
+            plt.plot([i for i in range(1, epochs+1)], valid_cost_history, label=f'Validation')
+            plt.title(f'Training and validation cost per epoch')
+            plt.legend(loc='upper right')
+            plt.xlabel(f'Epoch')
+            plt.ylabel(f'Cost (MSE)')
+            plt.show()
 
     def inference(self, data):
         return np.argmax(self._forward(data), axis=0, keepdims=True)
