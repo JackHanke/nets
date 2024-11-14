@@ -3,7 +3,6 @@ from functions.activation_funcs import Sigmoid
 from functions.loss_funcs import MSE
 import numpy as np
 from time import time
-
 from datasets.mnist.dataload import get_mnist_data
 
 def mnist_benchmark(network, save=False):
