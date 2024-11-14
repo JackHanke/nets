@@ -31,11 +31,10 @@ def anim(im_history, save=False):
                 frames = (nSeconds * fps),
                 interval = (1000 / fps), # in ms
             )
-    anim.save('./models/diffusion/diff-anim.gif', fps=fps)
+    anim.save('./models/diffusion/anim.gif', fps=fps)
 
-def add_noise(im):
-    noise = np.random.normal(loc=0, scale=0.07, size=(28,28))
-    result = im + noise
+def add_noise(im, noise, alpha):
+    result =  alpha*noise + (1-alpha)*im
     tobigmask = result > 1
     result[tobigmask] = 1
     tosmallmask = result < 0
@@ -52,10 +51,12 @@ def mnist_benchmark(network, save=False):
     print('MNIST data loaded in.')
 
     im = x_train[:, 0].reshape(28,28)
+    noise = np.random.uniform(low=0, high=1, size=(28,28))
+    alpha = 0.05
 
     im_history = [im]
     for _ in range(500):
-        im = add_noise(im)
+        im = add_noise(im=im, noise=noise, alpha=alpha)
         im_history.append(im)
 
     anim(im_history)
