@@ -10,37 +10,18 @@ class ArtificialNeuralNetwork:
     #   ie. (784, 15, 10) means a 784 x 15 array and a 15 x 10 array 
     # activations is tuple of activation function objects
     # loss is a tuple of a loss function and its derivative that accepts an activation vector and label vector
-    def __init__(self, dims, activation_funcs, loss, seed=None, version_num=0, load_loc=None):
-        if load_loc is None: 
-            self.version_num = str(version_num)
-            if len(dims)-1 != len(activation_funcs): raise Exception("List of dimensions and activations do not match.")
-            self.num_layers = len(dims)
-            self.loss = loss
-            if seed is not None: np.random.seed(seed)
-            self.activation_funcs = [-1,-1] + activation_funcs # insert filler to align indexing with textbook
-            self.weights = [-1,-1] # insert filler to align indexing with textbook
-            self.biases = [-1,-1]
-            for dim_index in range(len(dims)-1):
-                self.weights.append(np.random.normal(loc=0, scale=1/sqrt(dims[0]), size=(dims[dim_index+1], dims[dim_index])))
-                self.biases.append(np.random.normal(loc=0, scale=1, size=(dims[dim_index+1], 1)))
-        else: 
-            with open(load_loc, 'r') as fin:
-                model_info_dict = json.load(fin)
-
-                self.weights = model_info_dict['weights']
-                self.biases = model_info_dict['biases']
-                self.activation_funcs = model_info_dict['activation_funcs'] # TODO this doesnt work
-
-        def save(self, loc):
-            if loc is None: save_loc_part = f'models/ann/ann'
-            else: save_loc_part = loc
-            with open(save_loc_part+self.version_num+'.json', 'w') as fout:
-                model_info_dict = {
-                    'weights':self.weights, 
-                    'biases':self.biases, 
-                    'activation_funcs':[-1,-1]+[func.name for func in self.activation_funcs[2:]],
-                    }
-                json.dump(model_info_dict, fout)
+    def __init__(self, dims, activation_funcs, loss, seed=None, version_num=0):
+        self.version_num = str(version_num)
+        if len(dims)-1 != len(activation_funcs): raise Exception("List of dimensions and activations do not match.")
+        self.num_layers = len(dims)
+        self.loss = loss
+        if seed is not None: np.random.seed(seed)
+        self.activation_funcs = [-1,-1] + activation_funcs # insert filler to align indexing with textbook
+        self.weights = [-1,-1] # insert filler to align indexing with textbook
+        self.biases = [-1,-1]
+        for dim_index in range(len(dims)-1):
+            self.weights.append(np.random.normal(loc=0, scale=1/sqrt(dims[0]), size=(dims[dim_index+1], dims[dim_index])))
+            self.biases.append(np.random.normal(loc=0, scale=1, size=(dims[dim_index+1], 1)))
 
     # forward pass
     def _forward(self, activation, include=False):
