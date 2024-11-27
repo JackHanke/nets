@@ -14,8 +14,8 @@ def add_noise(im, noise, alpha):
     result =  alpha*noise + (1-alpha)*im
     return result
 
-def anim(im_history, save=False):
-    fps, nSeconds = 8, 5
+def anim(im_history, save_path):
+    fps, nSeconds = 10, len(im_history)//10
     # First set up the figure, the axis, and the plot element we want to animate
     fig = plt.figure()
     # fig = plt.figure( figsize=(8,8) )
@@ -36,9 +36,9 @@ def anim(im_history, save=False):
                 frames = (nSeconds * fps),
                 interval = (1000 / fps), # in ms
             )
-    anim.save('./models/diffusion/anim.gif', fps=fps)
+    anim.save(save_path, fps=fps)
 
-def mnist_noise_anim(network, save=False):
+def mnist_noise_anim(network, save_path):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
         train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
@@ -57,9 +57,49 @@ def mnist_noise_anim(network, save=False):
         thing = np.hstack((im, noise)) # NOTE probably delete or figure out how to look better
         im_history.append(thing)
 
-    anim(im_history)
+    anim(im_history, save_path=save_path)
 
-def mnist_ae_demo(ae_path=None):
+def mnist_ae_extrap_anim(ae):
+    x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
+        train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
+        train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
+        test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
+        test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
+    )
+    print('MNIST data loaded in.')
+
+    im1 = x_test[:, 0].reshape(-1,1) # NOTE this is an image of a '2'
+    im2 = x_test[:, 1].reshape(-1,1) # NOTE this is an image of a '7'
+    latent1 = ae.encoder_inference(activation=im1)
+    latent2 = ae.encoder_inference(activation=im2)
+
+    latents = []
+    alpha = 0.01
+    for a in np.arange(start=0, stop=1, step=alpha):
+        latent_res = latent1*a + latent2*(1-a)
+        latents.append(latent_res)
+    
+    def make_latent_im(ae, latent):
+        gen_im = ae.decoder_inference(activation=latent)
+        gen_im = gen_im.reshape(28,28)
+        latent = latent.reshape(6,6)
+        padding1 = np.zeros((11,6))
+        padding2 = np.zeros((28,11))
+        latent_im_padded = np.vstack((padding1, latent, padding1))
+        latent_im_padded = np.hstack((padding2, latent_im_padded, padding2))
+        latent_im_padded = np.vstack((gen_im, latent_im_padded))
+        return latent_im_padded
+
+    im_history = []
+    for latent in latents:
+        im = make_latent_im(ae=ae, latent=latent)
+        # thing = np.hstack((im, noise)) # NOTE probably delete or figure out how to look better
+        im_history.append(im)
+
+    anim(im_history, save_path=f'models/ae/extrap-anim.gif')
+
+# creates picture of messing with the latent space
+def mnist_ae(ae_path=None):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
         train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
@@ -106,14 +146,14 @@ def mnist_ae_demo(ae_path=None):
         with open(ae_path, 'rb') as f:
             ae = pickle.load(f)
 
+    return ae
+
+def mess_with_ae_gen(ae, image, save=False):
     np.random.seed(343)
     noise = np.random.uniform(low=0, high=1, size=(6,6))
 
-    # show naive autoencoder inference
-    original = x_test[:, 0].reshape(-1,1)
-    
     # inference = ae._forward(activation=original)
-    latent = ae.encoder_inference(activation=original)
+    latent = ae.encoder_inference(activation=image)
     inference = ae.decoder_inference(activation=latent)
 
     latent_im = latent.reshape(6,6)
@@ -124,12 +164,12 @@ def mnist_ae_demo(ae_path=None):
     latent_im_padded = np.vstack((padding, latent_im, padding))
     noisy_latent_im_padded = np.vstack((padding, noisy_latent_im, padding))
 
-    original = original.reshape(28,28)
+    image = original.reshape(28,28)
     inference = inference.reshape(28,28)
     noisy_inf = noisy_inf.reshape(28,28)
     
-    seq_array = np.hstack((original, latent_im_padded, inference))
-    seq_array2 = np.hstack((original, noisy_latent_im_padded, noisy_inf))
+    seq_array = np.hstack((image, latent_im_padded, inference))
+    seq_array2 = np.hstack((image, noisy_latent_im_padded, noisy_inf))
     im = np.vstack((seq_array, seq_array2))
     fig = plt.figure()
     plt.imshow(im, vmin=0, vmax=1)
@@ -137,6 +177,8 @@ def mnist_ae_demo(ae_path=None):
     plt.clim(0,1)
     plt.axis('off')
     plt.show()
+    if save: plt.savefig('models/ae/ae-noisy-seven.png')
+
 
 if __name__ == '__main__':
     # mnist_benchmark(network=None)
@@ -144,5 +186,8 @@ if __name__ == '__main__':
     # mnist_ae_demo()
 
     ae_path = f'models/ae/saves/mnist_ae_0.pkl'
-    mnist_ae_demo(ae_path=ae_path)
+    ae = mnist_ae(ae_path=ae_path)
 
+    mnist_ae_extrap_anim(ae=ae)
+
+    # mess_with_ae_gen(ae=ae, image=x_test[:, 0].reshape(-1,1), save=False)
