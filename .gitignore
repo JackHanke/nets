@@ -7,3 +7,5 @@ datasets/mnist
 datasets/iris
 # saved models
 models/*/trained_models/*.pkl
+
+datasets/emnist
