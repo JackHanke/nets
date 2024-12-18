@@ -1,6 +1,7 @@
 from models.ann.ann import ArtificialNeuralNetwork
 from models.ae.ae import AutoEncoder
 from models.vae.vae import VariationalAutoEncoder
+from models.diffusion.diffusion import prep_data_for_diffusion, Diffusion
 from functions.activation_funcs import *
 from functions.loss_funcs import *
 import numpy as np
@@ -11,10 +12,12 @@ import pickle
 
 import matplotlib.animation as animation
 
+# add 
 def add_noise(im, noise, alpha):
     result =  alpha*noise + (1-alpha)*im
     return result
 
+# 
 def anim(im_history, save_path):
     fps, nSeconds = 10, len(im_history)//10
     # First set up the figure, the axis, and the plot element we want to animate
@@ -39,6 +42,7 @@ def anim(im_history, save_path):
             )
     anim.save(save_path, fps=fps)
 
+# 
 def mnist_noise_anim(network, save_path):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
@@ -60,6 +64,7 @@ def mnist_noise_anim(network, save_path):
 
     anim(im_history, save_path=save_path)
 
+# 
 def mnist_ae_extrap_anim(ae):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
@@ -149,6 +154,7 @@ def mnist_ae(ae_path=None):
 
     return ae
 
+# 
 def mess_with_ae_gen(ae, image, save=False):
     np.random.seed(343)
     noise = np.random.uniform(low=0, high=1, size=(6,6))
@@ -180,7 +186,7 @@ def mess_with_ae_gen(ae, image, save=False):
     plt.show()
     if save: plt.savefig('models/ae/ae-noisy-seven.png')
 
-
+# 
 def mnist_vae(vae_path):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
@@ -230,14 +236,94 @@ def mnist_vae(vae_path):
 
     return vae
 
+
+def mnist_diffusion(diffusion_path=None):
+    x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
+        train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
+        train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
+        test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
+        test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
+    )
+    print('MNIST data loaded in.')
+
+    if diffusion_path is None:
+        # TODO explain what T is
+        T = 32
+        train = prep_data_for_diffusion(x=x_train, y=y_train, T=T)
+        valid = prep_data_for_diffusion(x=x_valid, y=y_valid, T=T)
+        print(f'Data prepared for diffusion training.')
+
+        diff = Diffusion(
+            dims=(794, 128, 64, 128, 794),
+            activation_funcs = [Sigmoid(), Sigmoid(), Sigmoid(), Sigmoid()], 
+            loss=(MSE()), 
+            seed=1,
+            version_num=0,
+            T=T
+        )
+
+        learning_rate = 0.1
+        epochs = 16
+        batch_size = 2*T
+
+        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
+        start = time()
+        diff.train(
+            train_data=train, 
+            train_labels=train,
+            valid_data=valid,
+            valid_labels=valid,
+            batch_size=batch_size, 
+            learning_rate=learning_rate, 
+            weight_decay=(1-(5*learning_rate)/(x_train.shape[1])),
+            epochs=epochs, 
+            verbose=True,
+            plot_learning=True
+        )
+        print(f'Training completed in {((time()-start)/60):.4f} minutes.')
+        
+        path_str = f'models/diffusion/saves/mnist_diffusion_{diff.version_num}.pkl'
+        with open(path_str, 'wb') as f:
+            pickle.dump(diff, file=f)
+        print(f'Model saved at: {path_str}')
+
+    elif diffusion_path:
+        with open(diffusion_path, 'rb') as f:
+            diff = pickle.load(f)
+
+    return diff
+
+
+
 if __name__ == '__main__':
     # mnist_benchmark(network=None)
-    
     # mnist_ae_demo()
-
-    ae_path = f'models/ae/saves/mnist_ae_0.pkl'
-    ae = mnist_ae(ae_path=ae_path)
-
-    mnist_ae_extrap_anim(ae=ae)
-
+    # ae_path = f'models/ae/saves/mnist_ae_0.pkl'
+    # ae = mnist_ae(ae_path=ae_path)
+    # mnist_ae_extrap_anim(ae=ae)
     # mess_with_ae_gen(ae=ae, image=x_test[:, 0].reshape(-1,1), save=False)
+
+    diff = mnist_diffusion(diffusion_path=None)
+    # diff = mnist_diffusion(diffusion_path=f'models/diffusion/saves/mnist_diffusion_0.pkl')
+
+    # vec = diff.gen(condition=0)
+    # print(vec)
+    # im = np.reshape()
+    for condition in range(10):
+        x_vec = np.random.normal(loc=0, scale=1, size=(784,1))
+        condition_vec = np.zeros((10,1))
+        if condition is not None: condition_vec[condition] = 1
+        x_vec = np.vstack((x_vec, condition_vec))
+        for t in range(diff.T): 
+            x_vec = diff._forward(activation=x_vec)
+
+        a = np.reshape(x_vec[:-10], (28,28))
+        im = plt.imshow(a, vmin=0, vmax=1)
+        plt.set_cmap('Grays')
+        plt.clim(0,1)
+        plt.axis('off')
+        plt.show()
+
+
+
+
