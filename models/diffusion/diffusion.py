@@ -4,27 +4,27 @@ import numpy as np
 # Constructed from: https://arxiv.org/pdf/2208.11970
 
 class Diffusion(ArtificialNeuralNetwork):
-    def __init__(self, T, **kwargs):
+    def __init__(self, T, x_dim, y_dim, color_dim, condition_dim, **kwargs):
         super(Diffusion, self).__init__(**kwargs)
         self.T = T # the number of diffusion steps
-        self.im_x_dim = 28 # NOTE dimension of horizontal pixels in image
-        self.im_y_dim = 28 # NOTE dimension of vertical pixels in image
-        self.im_color_dim = 1 # number of color channels 
-        self.condition_dim = 10 #
+        self.x_dim = x_dim # dimension of horizontal pixels in image
+        self.y_dim = y_dim # dimension of vertical pixels in image
+        self.color_dim = color_dim # number of color channels 
+        self.condition_dim = condition_dim # dimension of condition vector
 
-
+    # generate num_gen image(s) with a given condition(index for one-hot), 
     def gen(self, condition=None, num_gen=1, path=None, anim_path=None):
-        # NOTE also horrible
+        # TODO still needs work
         im_history = []
-        x_vec = np.random.normal(loc=0, scale=1, size=(784,1))
-        condition_vec = np.zeros((10,1))
-        if condition is not None: condition_vec[condition] = 1
+        x_vec = np.random.normal(loc=0, scale=1, size=(self.x_dim*self.y_dim*self.color_dim, num_gen))
+        condition_vec = np.zeros((self.condition_dim, num_gen))
+        if condition is not None: 
+            for i in range(num_gen): condition_vec[condition][i] = 1
         x_vec = np.vstack((x_vec, condition_vec))
-        im_history.append(np.reshape(x_vec[:-10], (28,28)))
+        im_history.append(np.reshape(x_vec[:-1*self.condition_dim], (self.y_dim,self.x_dim)))
         for t in range(diff.T): 
             x_vec = self._forward(activation=x_vec)
-            im_history.append(np.reshape(x_vec[:-10], (28,28)))
-
+            im_history.append(np.reshape(x_vec[:-1*self.condition_dim], (self.y_dim,self.x_dim)))
         return x_vec
 
 # TODO time this an make it better and faster
@@ -50,6 +50,5 @@ def prep_data_for_diffusion(x, y, T):
     train_labels = np.reshape(train_labels, (794, -1))
 
     print(f'Data prepared for diffusion training.')
-
     return train_data, train_labels
 

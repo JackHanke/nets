@@ -9,3 +9,4 @@ datasets/iris
 models/*/trained_models/*.pkl
 
 datasets/emnist
+!datasets/emnist/dataload.py

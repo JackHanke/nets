@@ -5,21 +5,16 @@ from functions.loss_funcs import *
 from functions.anim_funcs import *
 import numpy as np
 from time import time
-from datasets.mnist.dataload import get_mnist_data
+from datasets.emnist.dataload import get_data
 import matplotlib.pyplot as plt
 import pickle
 
-def mnist_diffusion(diffusion_path=None):
+def emnist_diffusion(diffusion_path=None):
     if diffusion_path is None:
-        x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
-            train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
-            train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
-            test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
-            test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-        )
+        
         print('MNIST data loaded in.')
 
-        T, x_dim, y_dim, color_dim, condition_dim = 8, 28, 28, 1, 10
+        T, x_dim, y_dim, color_dim, condition_dim = 8, 28, 28, 1, 26
 
         train_data, train_labels = prep_data_for_diffusion(x=x_train, y=y_train, T=T)
         valid_data, valid_labels = prep_data_for_diffusion(x=x_valid, y=y_valid, T=T)
@@ -53,7 +48,7 @@ def mnist_diffusion(diffusion_path=None):
         )
         print(f'Training completed in {((time()-start)/60):.4f} minutes.')
         
-        path_str = f'models/diffusion/saves/mnist_diffusion_{diff.version_num}.pkl'
+        path_str = f'models/diffusion/saves/emnist_diffusion_{diff.version_num}.pkl'
         with open(path_str, 'wb') as f:
             pickle.dump(diff, file=f)
         print(f'Model saved at: {path_str}')
@@ -65,8 +60,8 @@ def mnist_diffusion(diffusion_path=None):
     return diff
 
 if __name__ == '__main__':
-    # diff = mnist_diffusion(diffusion_path=None)
-    diff = mnist_diffusion(diffusion_path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+    diff = mnist_diffusion(diffusion_path=None)
+    # diff = emnist_diffusion(diffusion_path=f'models/diffusion/saves/emnist_diffusion_{0}.pkl')
     # vec = diff.gen(condition=0)
 
     def make_im_arr(vec, x, y):
