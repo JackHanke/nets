@@ -74,20 +74,21 @@ class ArtificialNeuralNetwork:
                 labels_batch = train_labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
                 train_cost = self._backward(train_data_batch, labels_batch, learning_rate, weight_decay=weight_decay, N=N)
             train_cost_history.append(train_cost)
-            # validation performance
-            validation_inferences = self._forward(activation=valid_data)
-            reg_term = 0
-            for weights_index, weights in enumerate(self.weights):
-                if weights_index > 1: reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
-            validation_cost = self.loss.cost(validation_inferences, valid_labels) + reg_term
-            valid_cost_history.append(validation_cost)
+            if valid_data is not None:
+                # validation performance
+                validation_inferences = self._forward(activation=valid_data)
+                reg_term = 0
+                for weights_index, weights in enumerate(self.weights):
+                    if weights_index > 1: reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
+                validation_cost = self.loss.cost(validation_inferences, valid_labels) + reg_term
+                valid_cost_history.append(validation_cost)
             if verbose and (epoch % 5) == 0: 
                 print(f'Training cost after epoch {epoch} = {train_cost}') 
-                print(f'Validation cost after epoch {epoch} = {validation_cost}') 
+                if valid_data is not None: print(f'Validation cost after epoch {epoch} = {validation_cost}') 
         
         if plot_learning: # plot learning curves
             plt.plot([i for i in range(1, epochs+1)], train_cost_history, label=f'Train')
-            plt.plot([i for i in range(1, epochs+1)], valid_cost_history, label=f'Validation')
+            if valid_data is not None:  plt.plot([i for i in range(1, epochs+1)], valid_cost_history, label=f'Validation')
             plt.title(f'Training and validation cost per epoch')
             plt.legend(loc='upper right')
             plt.xlabel(f'Epoch')
