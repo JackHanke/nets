@@ -4,6 +4,7 @@ import random
 from math import sqrt
 import json
 import matplotlib.pyplot as plt
+from time import time
 
 class ArtificialNeuralNetwork:
     # dims is tuple of length >=2 that defines the model dimensions
@@ -68,12 +69,14 @@ class ArtificialNeuralNetwork:
         train_cost_history, valid_cost_history = [], []
         N = train_data.shape[1]
         for epoch in range(epochs):
-            # TODO stochastic gradient descent (how to keep labels with right data)
+            start = time()
+            # TODO make this stochastic 
             for batch_index in range(train_data.shape[1]//batch_size):
                 train_data_batch = train_data[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
                 labels_batch = train_labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
                 train_cost = self._backward(train_data_batch, labels_batch, learning_rate, weight_decay=weight_decay, N=N)
             train_cost_history.append(train_cost)
+            end = time()
             if valid_data is not None:
                 # validation performance
                 validation_inferences = self._forward(activation=valid_data)
@@ -82,8 +85,8 @@ class ArtificialNeuralNetwork:
                     if weights_index > 1: reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
                 validation_cost = self.loss.cost(validation_inferences, valid_labels) + reg_term
                 valid_cost_history.append(validation_cost)
-            if verbose and (epoch % 5) == 0: 
-                print(f'Training cost after epoch {epoch} = {train_cost}') 
+            if verbose and (epoch % 2) == 0: 
+                print(f'Training cost after epoch {epoch} = {train_cost}. Completed in {end-start:.4f}s') 
                 if valid_data is not None: print(f'Validation cost after epoch {epoch} = {validation_cost}') 
         
         if plot_learning: # plot learning curves

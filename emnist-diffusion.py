@@ -12,7 +12,6 @@ import pickle
 def emnist_diffusion(path=None):
     if path is None:
         x_train, y_train = get_data()
-
         print('EMNIST data loaded in.')
 
         # NOTE
@@ -32,9 +31,9 @@ def emnist_diffusion(path=None):
 
         train_data, train_labels = diff.prep_data_for_diffusion(x=x_train, y=y_train, T=T)
 
-        learning_rate = 0.1
-        epochs = 50
-        batch_size = 3*T
+        learning_rate = 0.001
+        epochs = 3
+        batch_size = 4*T
 
         print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
         start = time()
@@ -64,10 +63,11 @@ def emnist_diffusion(path=None):
     return diff
 
 if __name__ == '__main__':
-    # diff = emnist_diffusion(path=None)
-    diff = emnist_diffusion(path=f'models/diffusion/saves/emnist_diffusion_{0}.pkl')
+    diff = emnist_diffusion(path=None)
+    # diff = emnist_diffusion(path=f'models/diffusion/saves/emnist_diffusion_{0}.pkl')
     # vec = diff.gen(condition=0)
 
+    # TODO delete all this crap
     def make_im_arr(vec, x, y):
         row = []
         for i in range(x):
@@ -84,9 +84,9 @@ if __name__ == '__main__':
     im_history = []
 
     row = []
-    for condition in [24,24,25,25]:
+    for condition in [0,1,2,3]:
         num_gen = 4
-        x_vec = np.random.normal(loc=(1/2), scale=(1/4), size=(784, num_gen))
+        x_vec = np.random.normal(loc=(1/2), scale=(1/6), size=(784, num_gen))
         condition_vec = np.zeros((26, num_gen))
         if condition is not None: 
             for i in range(num_gen): condition_vec[condition][i] = 1
