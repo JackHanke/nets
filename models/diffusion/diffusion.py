@@ -16,7 +16,7 @@ class Diffusion(ArtificialNeuralNetwork):
         self.tot_dim = self.tot_data_dim + self.condition_dim
         self.pred_data = pred_data # boolean on whether the neural network should predict the source image or the source noise
         self.loc = 1/2 # mean of noise
-        self.scale = 1/6 # standard deviation of noise
+        self.scale = 1/4 # standard deviation of noise
 
     # generate num_gen image(s) with a given condition(index for one-hot), 
     def gen(self, condition=None, num_gen=1, return_history=False):

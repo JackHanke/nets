@@ -1,5 +1,5 @@
 from models.ann.ann import ArtificialNeuralNetwork
-from models.diffusion.diffusion import prep_data_for_diffusion, Diffusion
+from models.diffusion.diffusion import Diffusion
 from functions.activation_funcs import *
 from functions.loss_funcs import *
 from functions.anim_funcs import *
@@ -20,30 +20,32 @@ def mnist_diffusion(diffusion_path=None):
         print('MNIST data loaded in.')
 
         T, x_dim, y_dim, color_dim, condition_dim = 8, 28, 28, 1, 10
-
-        train_data, train_labels = prep_data_for_diffusion(x=x_train, y=y_train, T=T)
-        valid_data, valid_labels = prep_data_for_diffusion(x=x_valid, y=y_valid, T=T)
-
         diff = Diffusion(
             dims=(794, 128, 128, 794),
             activation_funcs = [Sigmoid(), Sigmoid(), Sigmoid()], 
             loss=(MSE()), 
             seed=1,
             version_num=0,
-            T=T
+            T=T,
+            x_dim=x_dim,
+            y_dim=y_dim,
+            color_dim=color_dim,
+            condition_dim=condition_dim
         )
 
+        train_data, train_labels = diff.prep_data_for_diffusion(x=x_train, y=y_train, T=T)
+
         learning_rate = 0.1
-        epochs = 50
-        batch_size = 3*T
+        epochs = 25
+        batch_size = 1*T
 
         print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
         start = time()
         diff.train(
             train_data=train_data, 
             train_labels=train_labels, # TODO change!
-            valid_data=valid_data,
-            valid_labels=valid_labels, # TODO change!link
+            valid_data=None,
+            valid_labels=None, # TODO change!link
             batch_size=batch_size, 
             learning_rate=learning_rate, 
             weight_decay=(1-(5*learning_rate)/(x_train.shape[1])),
@@ -65,8 +67,8 @@ def mnist_diffusion(diffusion_path=None):
     return diff
 
 if __name__ == '__main__':
-    # diff = mnist_diffusion(diffusion_path=None)
-    diff = mnist_diffusion(diffusion_path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+    diff = mnist_diffusion(diffusion_path=None)
+    # diff = mnist_diffusion(diffusion_path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
     # vec = diff.gen(condition=0)
 
     def make_im_arr(vec, x, y):

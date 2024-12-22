@@ -2,11 +2,5 @@ __pychache__
 *.pyc
 
 # saved datasets except scripts
-datasets/mnist
-!datasets/mnist/dataload.py
-datasets/iris
-# saved models
-models/*/trained_models/*.pkl
-
-datasets/emnist
-!datasets/emnist/dataload.py
+datasets/*
+!datasets/**/dataload.py

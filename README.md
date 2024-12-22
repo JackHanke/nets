@@ -28,13 +28,11 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 - CNN
     - Everything
 - Diffusion Model
-    - Follow [this](https://www.youtube.com/watch?v=zc5NTeJbk-k&t=29s) video
     - Conditional image generation with a diffusion model from scratch on mnist
         - Train with classifier free guidance for better performance
+        - looks like performance and "convergence" are closely tied to the batch size. Why is this? time per batch decreases with smaller batch sizes, but cost decreases (if it does at all) more steadily with the smaller batch size. 
     - For Linkedin post:
-        - I wrote an image generator from scratch! This program learns to draw numbers after looking at pictures of other drawings of numbers (LeCun's MNIST). 
-        
-        This is specifically a diffusion model using classifier free guidance, which learns to predict a given image's true pixels after noise is added. The learned network is then used to predict data of a given label and noise array, effectively generating new images. This is one of the techniques used in modern image generators like Stable Diffusion and DALLE.
+        - Generative AI from scratch! I wrote a diffusion model to "draw" requested letters using the EMNIST dataset. This is one of the techniques used in modern image generators like Stable Diffusion and DALLE.
 
         - For viz, have header with "Please draw a __.", and have it draw 1738 (ay).
 

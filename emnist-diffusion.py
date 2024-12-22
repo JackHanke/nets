@@ -5,13 +5,14 @@ from functions.loss_funcs import *
 from functions.anim_funcs import *
 import numpy as np
 from time import time
-from datasets.emnist.dataload import get_data
+from datasets.emnist.dataload import get_data, get_data_small
 import matplotlib.pyplot as plt
 import pickle
 
 def emnist_diffusion(path=None):
     if path is None:
-        x_train, y_train = get_data()
+        # x_train, y_train = get_data()
+        x_train, y_train = get_data_small()
         print('EMNIST data loaded in.')
 
         # NOTE
@@ -31,24 +32,25 @@ def emnist_diffusion(path=None):
 
         train_data, train_labels = diff.prep_data_for_diffusion(x=x_train, y=y_train, T=T)
 
-        learning_rate = 0.001
-        epochs = 3
-        batch_size = 4*T
+        learning_rate = 0.1
+        epochs = 25
+        batch_size = T
 
         print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
         start = time()
         diff.train(
             train_data=train_data, 
-            train_labels=train_labels, # TODO change!
+            train_labels=train_labels,
             valid_data=None,
-            valid_labels=None, # TODO change!link
+            valid_labels=None,
             batch_size=batch_size, 
             learning_rate=learning_rate, 
-            weight_decay=(1-(5*learning_rate)/(x_train.shape[1])),
+            weight_decay=1,
             epochs=epochs, 
             verbose=True,
             plot_learning=True
         )
+            # weight_decay=(1-(5*learning_rate)/(x_train.shape[1])),
         print(f'Training completed in {((time()-start)/60):.4f} minutes.')
         
         path_str = f'models/diffusion/saves/emnist_diffusion_{diff.version_num}.pkl'
