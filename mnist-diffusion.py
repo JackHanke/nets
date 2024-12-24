@@ -19,33 +19,30 @@ def mnist_diffusion(diffusion_path=None):
         )
         print('MNIST data loaded in.')
 
-        T, x_dim, y_dim, color_dim, condition_dim = 8, 28, 28, 1, 10
+        T, alpha, x_dim, y_dim, color_dim, condition_dim = 256, 0.98, 28, 28, 1, 10
         diff = Diffusion(
-            dims=(794, 128, 128, 794),
-            activation_funcs = [Sigmoid(), Sigmoid(), Sigmoid()], 
+            dims=(794, 128, 128, 784),
+            activation_funcs = [Sigmoid(), Sigmoid(), Identity()], 
             loss=(MSE()), 
             seed=1,
             version_num=0,
             T=T,
+            alpha=alpha,
             x_dim=x_dim,
             y_dim=y_dim,
             color_dim=color_dim,
             condition_dim=condition_dim
         )
 
-        train_data, train_labels = diff.prep_data_for_diffusion(x=x_train, y=y_train, T=T)
-
-        learning_rate = 0.1
-        epochs = 25
-        batch_size = 1*T
+        learning_rate = 0.0001
+        epochs = 20
+        batch_size = 1024
 
         print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
         start = time()
         diff.train(
-            train_data=train_data, 
-            train_labels=train_labels, # TODO change!
-            valid_data=None,
-            valid_labels=None, # TODO change!link
+            train_data=((2*x_train)-1), 
+            train_conditions=y_train, 
             batch_size=batch_size, 
             learning_rate=learning_rate, 
             weight_decay=(1-(5*learning_rate)/(x_train.shape[1])),
@@ -71,37 +68,28 @@ if __name__ == '__main__':
     # diff = mnist_diffusion(diffusion_path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
     # vec = diff.gen(condition=0)
 
-    def make_im_arr(vec, x, y):
+    def make_im_arr(vecs, t, x, y):
         row = []
         for i in range(x):
             col = []
             for j in range(y):
-                temp = np.reshape(x_vec[:-10][:, (x*i)+j], (784,1))
-                # input(temp.shape)
-                col.append(np.reshape(temp, (28,28)))
+                temp = vecs[(x*j) + i][t]
+                # rescale to [0, 1]
+                temp = (temp+1)/2
+                col.append(temp)
             row.append(np.vstack(col))
         return np.hstack(row)
 
+    vecs = []
+    for condition in [8,8,8,8]:
+        vec_history = diff.gen(condition=condition, return_history=True)
+        vecs.append(vec_history)
+
     im_history = []
+    for t in range(diff.T):
+        im_history.append(make_im_arr(vecs=vecs, t=t, x=2, y=2))
 
-    row = []
-    for condition in [1,7,3,8]:
-        num_gen = 4
-        x_vec = np.random.normal(loc=(1/2), scale=(1/4), size=(784, num_gen))
-        condition_vec = np.zeros((10, num_gen))
-        if condition is not None: 
-            for i in range(num_gen): condition_vec[condition][i] = 1
-        x_vec = np.vstack((x_vec, condition_vec))
-        row.append(x_vec)
-    x_vec = np.hstack(row)
+    # NOTE add pause for final image``
+    im_history += [im_history[-1] for _ in range(10)]
 
-    im = make_im_arr(vec=x_vec, x=4, y=4)
-    im_history.append(im)
-    for t in range(diff.T): 
-        x_vec = diff._forward(activation=x_vec)
-
-        im = make_im_arr(vec=x_vec, x=4, y=4)
-        im_history.append(im)
-
-    anim(arr=im_history[:-1], save_path=f'models/diffusion/anim.gif', fps=4)
-
+    anim(arr=im_history, save_path=f'models/diffusion/anim.gif', fps=15)
