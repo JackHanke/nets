@@ -17,17 +17,31 @@ def mnist_diffusion(diffusion_path=None):
             test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
             test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
         )
-        print('MNIST data loaded in.')
+        # NOTE full dataset
+        # train_data = np.hstack((x_train, x_valid))
+        # train_labels = np.hstack((y_train, y_valid))
 
-        T, alpha, x_dim, y_dim, color_dim, condition_dim = 256, 0.98, 28, 28, 1, 10
+        # NOTE just valid dataset
+        train_data = x_valid
+        train_labels = y_valid
+
+        # NOTE one datapoint dataset
+        # train_data = np.reshape(x_train[:, 0], (-1,1))
+        # train_labels = np.reshape(y_train[:, 0], (-1,1))
+
+        # NOTE random dataset for testing purposes
+        # train_data = np.random.normal(loc=0, scale=1, size=(784, 60000))
+        # train_labels = np.zeros((10, 60000))
+
+        print('MNIST data loaded in.')
+        T, x_dim, y_dim, color_dim, condition_dim = 1000, 28, 28, 1, 10
         diff = Diffusion(
-            dims=(794, 128, 128, 784),
-            activation_funcs = [Sigmoid(), Sigmoid(), Identity()], 
+            dims=(784+10+1, 784, 784),
+            activation_funcs = [TanH(), Identity()], 
             loss=(MSE()), 
             seed=1,
             version_num=0,
             T=T,
-            alpha=alpha,
             x_dim=x_dim,
             y_dim=y_dim,
             color_dim=color_dim,
@@ -35,17 +49,18 @@ def mnist_diffusion(diffusion_path=None):
         )
 
         learning_rate = 0.0001
-        epochs = 20
-        batch_size = 1024
+        epochs = 30
+        # batch_size = 1
+        batch_size = 128
 
         print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
         start = time()
         diff.train(
-            train_data=((2*x_train)-1), 
-            train_conditions=y_train, 
+            train_data=((2*train_data)-1), 
+            train_conditions=train_labels, 
             batch_size=batch_size, 
             learning_rate=learning_rate, 
-            weight_decay=(1-(5*learning_rate)/(x_train.shape[1])),
+            weight_decay=0.99,
             epochs=epochs, 
             verbose=True,
             plot_learning=True
@@ -81,7 +96,7 @@ if __name__ == '__main__':
         return np.hstack(row)
 
     vecs = []
-    for condition in [8,8,8,8]:
+    for condition in [5,5,5,5]:
         vec_history = diff.gen(condition=condition, return_history=True)
         vecs.append(vec_history)
 
@@ -89,7 +104,7 @@ if __name__ == '__main__':
     for t in range(diff.T):
         im_history.append(make_im_arr(vecs=vecs, t=t, x=2, y=2))
 
-    # NOTE add pause for final image``
-    im_history += [im_history[-1] for _ in range(10)]
+    # NOTE add pause for final image
+    im_history += [im_history[-1] for _ in range(2)]
 
-    anim(arr=im_history, save_path=f'models/diffusion/anim.gif', fps=15)
+    anim(arr=im_history, save_path=f'models/diffusion/anim.gif', fps=16)

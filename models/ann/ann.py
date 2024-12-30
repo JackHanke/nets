@@ -59,15 +59,15 @@ class ArtificialNeuralNetwork:
             m = activations[layer_index-1].shape[1] # batch_size
             weight_gradient = (np.dot(delta, activations[layer_index-1].transpose()))*(1/m)
             bias_gradient = (delta).mean(axis=1, keepdims=True)
-            self.weights[layer_index] = (weight_decay)*self.weights[layer_index] - (learning_rate*weight_gradient)
+            self.weights[layer_index] = ((weight_decay)*self.weights[layer_index]) - (learning_rate*weight_gradient)
             self.biases[layer_index] -= (learning_rate)*bias_gradient
             # computes (layer_index - 1) delta vector
             if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1].function_prime(weighted_inputs[layer_index-1]))
         return cost
 
-    def train(self, train_data, train_labels, valid_data, valid_labels, batch_size, learning_rate, weight_decay, epochs, verbose=False, plot_learning=False):
+    def train(self, train_data, train_labels, valid_data, valid_labels, batch_size, learning_rate, weight_decay, epochs, verbose=False, plot_learning=False, N=None):
         train_cost_history, valid_cost_history = [], []
-        N = train_data.shape[1]
+        if N is not None: N = train_data.shape[1]
         for epoch in range(epochs):
             start = time()
             # TODO make this stochastic 
@@ -86,8 +86,8 @@ class ArtificialNeuralNetwork:
                 validation_cost = self.loss.cost(validation_inferences, valid_labels) + reg_term
                 valid_cost_history.append(validation_cost)
             if verbose and (epoch % 2) == 0: 
-                print(f'Training cost after epoch {epoch} = {train_cost}. Completed in {end-start:.4f}s') 
-                if valid_data is not None: print(f'Validation cost after epoch {epoch} = {validation_cost}') 
+                print(f'Training cost after epoch {epoch} = {train_cost:.6f}. Completed in {end-start:.4f}s') 
+                if valid_data is not None: print(f'Validation cost after epoch {epoch} = {validation_cost:.6f}') 
         
         if plot_learning: # plot learning curves
             plt.plot([i for i in range(1, epochs+1)], train_cost_history, label=f'Train')

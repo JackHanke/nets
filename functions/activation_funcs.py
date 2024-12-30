@@ -43,3 +43,13 @@ class ReLu:
     def function_prime(self, x):
         return 1. * (x > 0)
 
+class LeakyReLu:
+    def __init__(self):
+        self.name = 'leaky relu'
+    
+    def function(self, x):
+        return x * (x > 0) + 0.05*x*(x <= 0)
+
+    def function_prime(self, x):
+        return 1. * (x > 0) + 0.05 * (x <= 0)
+

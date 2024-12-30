@@ -39,4 +39,7 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 
 
 
+h = 100, 3.36
+h = 784, 
+h = 1000, 
 
