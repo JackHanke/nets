@@ -22,6 +22,10 @@ class Diffusion(ArtificialNeuralNetwork):
         self.pred_data = pred_data # boolean on whether the neural network should predict the source image or the source noise
 
     # noise schedule
+
+    # def alpha(self, t):
+    #     return 0.999
+
     def alpha(self, t):
         high = 1-0.02
         low = 1-0.0001
@@ -47,22 +51,23 @@ class Diffusion(ArtificialNeuralNetwork):
                 alpha_bar = 1
                 for t_star in range(1,t+1): alpha_bar *= self.alpha(t=t_star)
 
-                noisy_vec = (np.sqrt(alpha_bar)*train_data_batch) + (np.sqrt(1-alpha_bar)*epsilon)
+                # noisy_vec = (np.sqrt(alpha_bar)*train_data_batch) + (np.sqrt(1-alpha_bar)*epsilon)
+                noisy_vec = (np.sqrt(self.alpha(t=t))*train_data_batch) + (np.sqrt(1-self.alpha(t=t))*epsilon)
 
                 # add condition vector
                 vec = np.vstack((noisy_vec, labels_batch, t*np.ones((1, batch_size))))
 
                 if 0: # TODO remove all this nonsense
-                    tl = np.reshape(noisy_vec, (28,28))
-                    tr = np.reshape(epsilon, (28,28))
+                    tl = np.reshape(noisy_vec, (28, 28))
+                    tr = np.reshape(epsilon, (28, 28))
                     bl = -1*np.ones((28, 28))
-                    br = np.reshape(self._forward(activation=vec), (28,28))
+                    br = np.reshape(self._forward(activation=vec), (28, 28))
                     b = np.hstack((bl, br))
                     top = np.hstack((tl, tr))
                     im = np.vstack((top, b))
                     im = plt.imshow(im, vmin=0, vmax=1)
                     plt.set_cmap('Grays')
-                    plt.clim(-1,1)
+                    plt.clim(-1, 1)
                     plt.axis('off')
                     
                     title_str = ''
@@ -118,7 +123,8 @@ class Diffusion(ArtificialNeuralNetwork):
             alpha_bar = 1
             for t_star in range(1,t+1): alpha_bar *= self.alpha(t=t_star)
 
-            x_vec = ((x_vec  - ((1-self.alpha(t=t))/np.sqrt(1-(alpha_bar)))*epsilon_pred)/np.sqrt(self.alpha(t=t))) + (1-self.alpha(t)) * z
+            # x_vec = ((x_vec  - ((1-self.alpha(t=t))/np.sqrt(1-(alpha_bar)))*epsilon_pred)/np.sqrt(self.alpha(t=t))) + (1-self.alpha(t)) * z
+            x_vec = ((x_vec  - np.sqrt(1-(self.alpha(t=t))))*epsilon_pred)/np.sqrt(self.alpha(t=t)) + np.sqrt(1-self.alpha(t)) * z
             
             im = np.reshape(x_vec, (self.y_dim,self.x_dim))
             im_history.append(im)

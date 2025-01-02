@@ -18,12 +18,12 @@ def mnist_diffusion(diffusion_path=None):
             test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
         )
         # NOTE full dataset
-        # train_data = np.hstack((x_train, x_valid))
-        # train_labels = np.hstack((y_train, y_valid))
+        train_data = np.hstack((x_train, x_valid))
+        train_labels = np.hstack((y_train, y_valid))
 
         # NOTE just valid dataset
-        train_data = x_valid
-        train_labels = y_valid
+        # train_data = x_valid
+        # train_labels = y_valid
 
         # NOTE one datapoint dataset
         # train_data = np.reshape(x_train[:, 0], (-1,1))
@@ -36,8 +36,8 @@ def mnist_diffusion(diffusion_path=None):
         print('MNIST data loaded in.')
         T, x_dim, y_dim, color_dim, condition_dim = 1000, 28, 28, 1, 10
         diff = Diffusion(
-            dims=(784+10+1, 784, 784),
-            activation_funcs = [TanH(), Identity()], 
+            dims=(784+10+1, 784, 784, 784),
+            activation_funcs = [TanH(), TanH(), TanH()], 
             loss=(MSE()), 
             seed=1,
             version_num=0,
@@ -48,8 +48,8 @@ def mnist_diffusion(diffusion_path=None):
             condition_dim=condition_dim
         )
 
-        learning_rate = 0.0001
-        epochs = 30
+        learning_rate = 0.00002
+        epochs = 75
         # batch_size = 1
         batch_size = 128
 
@@ -60,7 +60,7 @@ def mnist_diffusion(diffusion_path=None):
             train_conditions=train_labels, 
             batch_size=batch_size, 
             learning_rate=learning_rate, 
-            weight_decay=0.99,
+            weight_decay=1,
             epochs=epochs, 
             verbose=True,
             plot_learning=True
