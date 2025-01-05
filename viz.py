@@ -16,9 +16,10 @@ def visualize_input_output(ae):
         test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
     )
     print('MNIST data loaded in.')
-    im = np.reshape(x_train[:, 0], (28*28,1))
-    noise = np.random.normal(loc=(1/2), scale=(1/6), size=im.shape)
-    input_im = (5/7)*im + (2/7)*noise
+    input_im = np.reshape(x_train[:, 0], (28*28,1))
+    # noise = np.random.normal(loc=(1/2), scale=(1/6), size=im.shape)
+    # input_im = (5/7)*im + (2/7)*noise
+    # output_im = ae._forward(activation=input_im)
 
     output_im = ae._forward(activation=input_im)
 
@@ -32,7 +33,7 @@ def visualize_input_output(ae):
 
     fig = plt.figure()
     plt.imshow(im, vmin=0, vmax=1)
-    plt.set_cmap('Grays')
+    plt.set_cmap('Greys')
     plt.clim(0,1)
     plt.axis('off')
     plt.show()

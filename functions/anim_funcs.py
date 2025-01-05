@@ -18,7 +18,7 @@ def anim_ims(arr, save_path, fps=10, show=False):
     fig = plt.figure()
     a = arr[0]
     im = plt.imshow(a, vmin=0, vmax=1)
-    plt.set_cmap('Grays')
+    plt.set_cmap('Greys')
     plt.clim(0,1)
     # plt.clim(-1,1)
     plt.axis('off')

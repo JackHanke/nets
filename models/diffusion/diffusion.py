@@ -2,8 +2,11 @@ from ..ann.ann import ArtificialNeuralNetwork
 import numpy as np
 import matplotlib.pyplot as plt
 from time import time
+import pickle
 
+# TODO remove this stuff
 import matplotlib.animation as animation
+
 def anim_ims(arr, save_path, fps=10, show=False):
     nSeconds = len(arr)//fps
     # First set up the figure, the axis, and the plot element we want to animate
@@ -29,6 +32,7 @@ def anim_ims(arr, save_path, fps=10, show=False):
             )
     if show: plt.show()
     if not show: anim.save(save_path, fps=fps)
+
 # animates plotted (x,y) data (2D) TODO remove
 def anim_plot(arr, save_path, fps=10, show=False):
     nSeconds = len(arr)//fps
@@ -196,6 +200,12 @@ class Diffusion(ArtificialNeuralNetwork):
             end = time()
             if verbose and (epoch % 1) == 0: 
                 print(f'Training cost after epoch {epoch} = {train_cost}. Completed in {end-start:.4f}s') 
+
+            if epoch % 5 == 4:
+                path_str = f'models/diffusion/saves/mnist_diffusion_{self.version_num}.pkl'
+                with open(path_str, 'wb') as f:
+                    pickle.dump(self, file=f)
+                print(f'Model saved at: {path_str}')
         
         if plot_learning: # plot learning curves
             # train_cost_history = train_cost_history[500:]

@@ -40,8 +40,8 @@ def mnist_ae(path=None):
     )
     print('MNIST data loaded in.')
     # NOTE full dataset
-    # train_data = np.hstack((x_train, x_valid))
-    # train_labels = np.hstack((x_train, x_valid))
+    train_data = np.hstack((x_train, x_valid))
+    train_labels = np.hstack((x_train, x_valid))
 
     # NOTE random dataset for testing
     # np.random.seed(1)
@@ -49,20 +49,20 @@ def mnist_ae(path=None):
     # x_valid = np.random.normal(loc=0, scale=1, size=(784, 12000))
 
     # NOTE dataset for denoising, just valid
-    train_data, train_labels = noise_dataset(data=x_valid, T=10)
-    print(f'Noisy dataset made')
+    # train_data, train_labels = noise_dataset(data=x_valid, T=10)
+    # print(f'Noisy dataset made')
 
     if path is None:
         ae = AutoEncoder(
-            dims=(784, 128, 128, 784),
-            activation_funcs = [Sigmoid(), Sigmoid(), Sigmoid()], 
+            dims=(784, 256, 49, 256, 784),
+            activation_funcs = [TanH(), TanH(), TanH(), Sigmoid()], 
             loss=(MSE()), 
             seed=1,
             version_num=0,
             add_noise=True
         )
 
-        learning_rate = 0.001
+        learning_rate = 0.05
         epochs = 100
         batch_size = 128
 

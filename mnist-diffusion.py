@@ -9,42 +9,52 @@ from datasets.mnist.dataload import get_mnist_data
 import matplotlib.pyplot as plt
 import pickle
 
+def get_and_encode_mnist(ae_path):
+    x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
+        train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
+        train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
+        test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
+        test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
+    )
+    train_data = ((2*x_train)-1)
+    path_str = f'datasets/mnist/mnist-xtrain.pkl'
+    with open(path_str, 'wb') as f:
+        pickle.dump(train_data, file=f)
+
+    input('done')
+
+    with open(ae_path, 'rb') as f:
+        ae = pickle.load(f)
+
+    encoded_x_train = ae.encoder_inference(activation=x_train)
+
+    path_str = f'datasets/mnist/encoded-mnist.pkl'
+    with open(path_str, 'wb') as f:
+        pickle.dump(encoded_x_train, file=f)
+
+    path_str = f'datasets/mnist/encoded-mnist-ytrain.pkl'
+    with open(path_str, 'wb') as f:
+        pickle.dump(y_train, file=f)
+
+    print(f'Data encoded.')
 
 def mnist_diffusion(diffusion_path=None):
     if diffusion_path is None:
-        x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
-            train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
-            train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
-            test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
-            test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-        )
-        # NOTE full dataset
-        # train_data = np.hstack((x_train, x_valid))
-        # train_labels = np.hstack((y_train, y_valid))
+        # with open(f'datasets/mnist/encoded-mnist.pkl', 'rb') as f:
+        with open(f'datasets/mnist/mnist-xtrain.pkl', 'rb') as f:
+            train_data = pickle.load(f)
+        with open(f'datasets/mnist/encoded-mnist-ytrain.pkl', 'rb') as f:
+            train_labels = pickle.load(f)
 
         # NOTE just valid dataset
-        train_data = x_train
-        train_labels = y_train
-
-        # NOTE just valid dataset
-        # train_data = x_valid
-        # train_labels = y_valid
-
-        # NOTE one datapoint dataset
-        # train_data = np.reshape(x_train[:, 0], (-1,1))
-        # train_labels = np.reshape(y_train[:, 0], (-1,1))
-
-        # NOTE random dataset for testing purposes
-        # train_data = np.random.normal(loc=0, scale=1, size=(784, 60000))
-        # train_labels = np.zeros((10, 60000))
-
-        train_data = ((2*train_data)-1)
+        # train_data, train_labels = data
+        # train_labels = y_train
         print('MNIST data loaded in.')
 
         T, x_dim, y_dim, color_dim, condition_dim = 16, 28, 28, 1, 10
         diff = Diffusion(
-            dims=(784+condition_dim+T, 20000, 5000, 5000, 784),
-            activation_funcs = [LeakyReLu(), LeakyReLu(), LeakyReLu(), Identity()], 
+            dims=(train_data.shape[0]+condition_dim+T, 10000, 10000, 4000, 4000, train_data.shape[0]),
+            activation_funcs = [TanH(), TanH(), TanH(), TanH(), Identity()], 
             loss=(MSE()), 
             seed=None,
             version_num=0,
@@ -55,8 +65,8 @@ def mnist_diffusion(diffusion_path=None):
             condition_dim=condition_dim
         )
 
-        learning_rate = 1*(10**(-5))
-        epochs = 5
+        learning_rate = 2*(10**(-4))
+        epochs = 20
         # batch_size = 1
         batch_size = 256
 
@@ -74,11 +84,6 @@ def mnist_diffusion(diffusion_path=None):
         )
         print(f'Training completed in {((time()-start)/60):.4f} minutes.')
         
-        path_str = f'models/diffusion/saves/mnist_diffusion_{diff.version_num}.pkl'
-        with open(path_str, 'wb') as f:
-            pickle.dump(diff, file=f)
-        print(f'Model saved at: {path_str}')
-
     elif diffusion_path:
         with open(diffusion_path, 'rb') as f:
             diff = pickle.load(f)
@@ -86,12 +91,27 @@ def mnist_diffusion(diffusion_path=None):
     return diff
 
 if __name__ == '__main__':
-    diff = mnist_diffusion(diffusion_path=None)
-    # diff = mnist_diffu sion(diffusion_path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
-    # vec = diff.gen(condition=0)
+    # get_and_encode_mnist(ae_path=f'models/ae/saves/mnist_ae_{0}.pkl')
 
-    vec_history = diff.gen(condition=8, return_history=True)
-    anim_ims(arr=vec_history, save_path=f'models/diffusion/anim.gif', fps=16, show=False)
+    # get autoencoder
+    with open(f'models/ae/saves/mnist_ae_{0}.pkl', 'rb') as f:
+        ae = pickle.load(f)
+
+    # diff = mnist_diffusion(diffusion_path=None)
+    diff = mnist_diffusion(diffusion_path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+
+    vec_history = diff.gen(condition=9, return_history=True)
+    anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
+
+    # encode inference
+    # history = []
+    # for vec in vec_history:
+    #     temp = np.reshape(vec, (-1,1))
+    #     im = ae.decoder_inference(activation=temp)
+    #     im = np.reshape(im, (28, 28))
+    #     history.append(im)
+
+    # anim_ims(arr=history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
 
 
     # TODO remove
@@ -106,50 +126,50 @@ if __name__ == '__main__':
     # plt.show()
 
     # TODO remove
-    x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
-        train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
-        train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
-        test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
-        test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-    )
-    t = 8
-    train_data_batch = 2*np.reshape(x_train[:, 0], (-1,1))-1
-    noisy_vec, epsilon = diff.get_x_t(train_data_batch, t=t)
+    # x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
+    #     train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
+    #     train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
+    #     test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
+    #     test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
+    # )
+    # t = 8
+    # train_data_batch = 2*np.reshape(x_train[:, 0], (-1,1))-1
+    # noisy_vec, epsilon = diff.get_x_t(train_data_batch, t=t)
 
-    labels_batch = np.zeros((diff.condition_dim, 1))
-    for i in range(1): labels_batch[5][0] = 1
+    # labels_batch = np.zeros((diff.condition_dim, 1))
+    # for i in range(1): labels_batch[5][0] = 1
 
-    time_vec = np.reshape(np.eye(diff.T)[t-1].transpose(), (-1,1))
+    # time_vec = np.reshape(np.eye(diff.T)[t-1].transpose(), (-1,1))
 
-    # print(noisy_vec.shape)
-    # print(labels_batch.shape)
-    # input(time_vec.shape)
+    # # print(noisy_vec.shape)
+    # # print(labels_batch.shape)
+    # # input(time_vec.shape)
 
-    vec = np.vstack((noisy_vec, labels_batch, time_vec))
+    # vec = np.vstack((noisy_vec, labels_batch, time_vec))
 
 
-    tl = np.reshape(noisy_vec, (28, 28))
-    tr = np.reshape(epsilon, (28, 28))
-    br = np.reshape(diff._forward(activation=vec), (28, 28))
-    bl = np.square(br-tr)
-    b = np.hstack((bl, br))
-    top = np.hstack((tl, tr))
-    im = np.vstack((top, b))
-    im = plt.imshow(im, vmin=0, vmax=1)
-    plt.set_cmap('Grays')
-    plt.clim(-1, 1)
-    plt.axis('off')
+    # tl = np.reshape(noisy_vec, (28, 28))
+    # tr = np.reshape(epsilon, (28, 28))
+    # br = np.reshape(diff._forward(activation=vec), (28, 28))
+    # bl = np.square(br-tr)
+    # b = np.hstack((bl, br))
+    # top = np.hstack((tl, tr))
+    # im = np.vstack((top, b))
+    # im = plt.imshow(im, vmin=0, vmax=1)
+    # plt.set_cmap('Grays')
+    # plt.clim(-1, 1)
+    # plt.axis('off')
     
-    title_str = ''
-    title_str += f't={t} '
-    #  {sqrt(self.alpha**t):.1f} {sqrt(1-self.alpha**t):.1f} '
-    # title_str += f'tdb = {np.max(train_data_batch):.1f} {np.min(train_data_batch):.1f} '
-    title_str += f'nvec = ({np.min(noisy_vec):.1f}, {np.max(noisy_vec):.1f}) '
-    title_str += f'ep = ({np.min(epsilon):.1f}, {np.max(epsilon):.1f}) '
-    title_str += f'pred = ({np.min(br):.1f}, {np.max(br):.1f}) '
-    title_str += f'cost = ({np.min(bl):.1f}, {np.max(bl):.1f}) '
-    plt.title(title_str)
-    plt.show()
+    # title_str = ''
+    # title_str += f't={t} '
+    # #  {sqrt(self.alpha**t):.1f} {sqrt(1-self.alpha**t):.1f} '
+    # # title_str += f'tdb = {np.max(train_data_batch):.1f} {np.min(train_data_batch):.1f} '
+    # title_str += f'nvec = ({np.min(noisy_vec):.1f}, {np.max(noisy_vec):.1f}) '
+    # title_str += f'ep = ({np.min(epsilon):.1f}, {np.max(epsilon):.1f}) '
+    # title_str += f'pred = ({np.min(br):.1f}, {np.max(br):.1f}) '
+    # title_str += f'cost = ({np.min(bl):.1f}, {np.max(bl):.1f}) '
+    # plt.title(title_str)
+    # plt.show()
 
     # anim(arr=vec_history, save_path=f'models/diffusion/anim2.gif', fps=16)
 
