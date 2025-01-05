@@ -13,6 +13,7 @@ class ArtificialNeuralNetwork:
     # loss is a tuple of a loss function and its derivative that accepts an activation vector and label vector
     def __init__(self, dims, activation_funcs, loss, seed=None, version_num=0):
         self.version_num = str(version_num)
+        self.dims = dims
         if len(dims)-1 != len(activation_funcs): raise Exception("List of dimensions and activations do not match.")
         self.num_layers = len(dims)
         self.loss = loss
@@ -38,20 +39,20 @@ class ArtificialNeuralNetwork:
         else: return activation
 
     # forward and backward pass
-    def _backward(self, activation, label, learning_rate, weight_decay, N=None):
+    def _backward(self, activation, label, learning_rate, weight_decay, N=None, epsilon=None):
         # forward pass
         activation, weighted_inputs, activations = self._forward(activation, include=True)
         # compute cost of forward pass for verbose output
-
         reg_term = 0
         if N is not None: # if regularization
             for weights_index, weights in enumerate(self.weights):
                 if weights_index > 1:
                     reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
         cost = self.loss.cost(activation, label) + reg_term
+
         # backward pass
         # final layer
-        delta = np.multiply(self.loss.loss_prime(activation, label), self.activation_funcs[-1].function_prime(weighted_inputs[-1]))
+        delta = np.multiply(self.loss.loss_prime(activation, label, epsilon=epsilon), self.activation_funcs[-1].function_prime(weighted_inputs[-1]))
         #remaining layers
         for layer_index in range(self.num_layers, 1, -1):
             # compute product before weights change
@@ -63,7 +64,8 @@ class ArtificialNeuralNetwork:
             self.biases[layer_index] -= (learning_rate)*bias_gradient
             # computes (layer_index - 1) delta vector
             if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1].function_prime(weighted_inputs[layer_index-1]))
-        return cost
+            elif layer_index == 1: delta = product # TODO uhhh
+        return cost, delta
 
     def train(self, train_data, train_labels, valid_data, valid_labels, batch_size, learning_rate, weight_decay, epochs, verbose=False, plot_learning=False, N=None):
         train_cost_history, valid_cost_history = [], []
@@ -74,7 +76,13 @@ class ArtificialNeuralNetwork:
             for batch_index in range(train_data.shape[1]//batch_size):
                 train_data_batch = train_data[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
                 labels_batch = train_labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
-                train_cost = self._backward(train_data_batch, labels_batch, learning_rate, weight_decay=weight_decay, N=N)
+                train_cost, delta = self._backward(
+                    activation=train_data_batch,
+                    label=labels_batch,
+                    learning_rate=learning_rate,
+                    weight_decay=weight_decay,
+                    N=N
+                )
             train_cost_history.append(train_cost)
             end = time()
             if valid_data is not None:

@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 import pickle
 import sklearn
 
-def moon_diffusion(diffusion_path=None):
-    if diffusion_path is None:
+def moon_diffusion(path=None):
+    if path is None:
         train_data, train_labels = sklearn.datasets.make_moons(n_samples=1000)
         train_data = train_data.transpose()
         train_labels = np.eye(2)[train_labels].transpose()
@@ -77,17 +77,17 @@ def moon_diffusion(diffusion_path=None):
             pickle.dump(diff, file=f)
         print(f'Model saved at: {path_str}')
 
-    elif diffusion_path:
-        with open(diffusion_path, 'rb') as f:
+    elif path:
+        with open(path, 'rb') as f:
             diff = pickle.load(f)
 
     return diff
 
 if __name__ == '__main__':
-    # diff = moon_diffusion(diffusion_path=None)
-    diff = moon_diffusion(diffusion_path=f'models/diffusion/saves/moon_diffusion_{0}.pkl')
+    # diff = moon_diffusion(path=None)
+    diff = moon_diffusion(path=f'models/diffusion/saves/moon_diffusion_{0}.pkl')
 
-    vec_history = diff.gen(condition=1, num_gen=500, return_history=True)
+    vec_history = diff.gen(condition=None, num_gen=500, return_history=True)
 
     train_data, _ = sklearn.datasets.make_moons(n_samples=100)
     train_data = train_data.transpose()

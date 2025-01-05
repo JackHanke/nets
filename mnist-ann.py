@@ -6,7 +6,7 @@ from time import time
 from datasets.mnist.dataload import get_mnist_data
 import pickle
 
-def mnist_benchmark(network_path=None):
+def mnist_benchmark(path=None):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
         train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
@@ -15,7 +15,7 @@ def mnist_benchmark(network_path=None):
     )
     print('MNIST data loaded in.')
 
-    if network_path is None: # if no network path is given
+    if path is None: # if no network path is given
         # make new network 
         network = ArtificialNeuralNetwork(
             dims=(784, 30, 10),
@@ -51,9 +51,9 @@ def mnist_benchmark(network_path=None):
             pickle.dump(network, file=f)
         print(f'Model saved at: {path_str}')
 
-    elif network_path:
+    elif path:
         # load in already trained model
-        with open(network_path, 'rb') as f:
+        with open(path, 'rb') as f:
             network = pickle.load(f)
 
     # test performance
@@ -62,7 +62,7 @@ def mnist_benchmark(network_path=None):
     return accuracy
 
 if __name__ == '__main__':
-    acc = mnist_benchmark(network_path=None)
+    acc = mnist_benchmark(path=None)
 
-    # network_path = f'models/ann/saves/mnist_ann_0.pkl'
-    # acc = mnist_benchmark(network_path=network_path)
+    # path = f'models/ann/saves/mnist_ann_0.pkl'
+    # acc = mnist_benchmark(path=path)

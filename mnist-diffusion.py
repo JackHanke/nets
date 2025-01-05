@@ -38,8 +38,8 @@ def get_and_encode_mnist(ae_path):
 
     print(f'Data encoded.')
 
-def mnist_diffusion(diffusion_path=None):
-    if diffusion_path is None:
+def mnist_diffusion(path=None):
+    if path is None:
         # with open(f'datasets/mnist/encoded-mnist.pkl', 'rb') as f:
         with open(f'datasets/mnist/mnist-xtrain.pkl', 'rb') as f:
             train_data = pickle.load(f)
@@ -84,8 +84,8 @@ def mnist_diffusion(diffusion_path=None):
         )
         print(f'Training completed in {((time()-start)/60):.4f} minutes.')
         
-    elif diffusion_path:
-        with open(diffusion_path, 'rb') as f:
+    elif path:
+        with open(path, 'rb') as f:
             diff = pickle.load(f)
 
     return diff
@@ -97,8 +97,8 @@ if __name__ == '__main__':
     with open(f'models/ae/saves/mnist_ae_{0}.pkl', 'rb') as f:
         ae = pickle.load(f)
 
-    # diff = mnist_diffusion(diffusion_path=None)
-    diff = mnist_diffusion(diffusion_path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+    # diff = mnist_diffusion(path=None)
+    diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
 
     vec_history = diff.gen(condition=9, return_history=True)
     anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)

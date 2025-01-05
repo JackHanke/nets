@@ -4,10 +4,11 @@ from functions.loss_funcs import *
 from models.vae.vae import VariationalAutoEncoder
 from functions.anim_funcs import *
 from datasets.mnist.dataload import get_mnist_data
+from time import time
 
 # TODO not done
 # creates variational autoencoder for MNIST
-def mnist_vae(vae_path=None):
+def mnist_vae(path=None):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
         train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
@@ -16,18 +17,31 @@ def mnist_vae(vae_path=None):
     )
     print('MNIST data loaded in.')
 
-    if vae_path is None:
-        vae = VariationalAutoEncoder(
-            dims=(784, 64, 36, 64, 784),
-            activation_funcs = [Sigmoid(), Sigmoid(), Sigmoid(), Sigmoid()], 
+    if path is None:
+        latent_dim = 10
+        encodernet = ArtificialNeuralNetwork(
+            dims=(784, 128, 2*latent_dim),
+            activation_funcs = [Sigmoid(), TanH()], 
+            loss=(VAEInternal(latent_dim=latent_dim)), # TODO write custom class for this
+            seed=1,
+            version_num=0
+        )
+        decodernet = ArtificialNeuralNetwork(
+            dims=(latent_dim, 128, 784),
+            activation_funcs = [Sigmoid(), Sigmoid()], 
             loss=(MSE()), 
             seed=1,
-            version_num=0    
+            version_num=0
+        )
+        vae = VariationalAutoEncoder(
+            encodernet=encodernet,
+            decodernet=decodernet
         )
 
-        learning_rate = 0.1
+        learning_rate = 0.01
         epochs = 60
-        batch_size = 25
+        batch_size = 1
+        # batch_size = 128
 
         print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
         start = time()
@@ -50,8 +64,8 @@ def mnist_vae(vae_path=None):
             pickle.dump(vae, file=f)
         print(f'Model saved at: {path_str}')
 
-    elif vae_path:
-        with open(vae_path, 'rb') as f:
+    elif path:
+        with open(path, 'rb') as f:
             vae = pickle.load(f)
 
     return vae

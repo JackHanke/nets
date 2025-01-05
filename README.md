@@ -1,13 +1,25 @@
 # Neural Networks from Scratch
-This repo consists of academic exercises to create all facets of the following neural network architectures from scratch.
-- A multilayer perceptron, including
-    - Regularization
+This repo hosts custom implementations of **Numpy-only** neural network architectures. Implemented and planned architectures include: 
+- ✓ An artificial neural network (ANN)
+    - ✓ Regularization (written as weight decay)
+    - Isolate weight update and optimizer from gradient calculating process
+    - ADAM optimizer
     - Dropout
-- A convolutional neural network
+    - Automatic differentiation
+- ✓ Autoencoder
+- Variational autoencoder
+- Denoising diffusion model
+    - Classifier free guidance
+- Convolutional neural network (CNN)
+- Transformer
+    - Sentence-embedding model
+    - Text-to-image model
 
-Here scratch means just using Python and NumPy. 
-
-Implementations will be benchmarked on both the classical [MNIST](https://www.tensorflow.org/datasets/catalog/mnist) and [Iris](https://archive.ics.uci.edu/dataset/53/iris) data sets.
+## Datasets used for Benchmarking
+Datasets used in this projects include:
+- [MNIST](https://www.tensorflow.org/datasets/catalog/mnist)
+- [Iris](https://archive.ics.uci.edu/dataset/53/iris)
+- [Half Moon](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_moons.html)
 
 ## Best Results Achieved
 
@@ -21,25 +33,38 @@ Implementations will be benchmarked on both the classical [MNIST](https://www.te
 
 ## Project TODOs
 - ANN
-    - Implement model save and load feature
     - Debug CrossEntropy class
-    - Add dropout
-    - Implement Adam Optimizer
-- CNN
-    - Everything
 - Diffusion Model
     - Conditional image generation with a diffusion model from scratch on mnist
-        - Train with classifier free guidance for better performance
-        - looks like performance and "convergence" are closely tied to the batch size. Why is this? time per batch decreases with smaller batch sizes, but cost decreases (if it does at all) more steadily with the smaller batch size. 
     - For Linkedin post:
-        - Generative AI from scratch! I wrote a diffusion model to "draw" requested letters using the EMNIST dataset. This is one of the techniques used in modern image generators like Stable Diffusion and DALLE.
+        - Generative AI from scratch! I wrote a latent denoising diffusion model with just NumPy to "draw" requested letters using the EMNIST dataset. This model architecture is used in modern image generators like Stable Diffusion and DALLE.
 
         - For viz, have header with "Please draw a __.", and have it draw 1738 (ay).
 
+## Notes
 
+For layers $2 \leq \ell \leq L$, a feed forward neural network is defined by
+$$z^{\ell} = w^{\ell}a^{\ell-1} + b^{\ell}$$
+$$a^{\ell} = \sigma^{\ell}(z^{\ell})$$
+for activation functions $\sigma^{\ell}$ and weights $w^{\ell}$ and biases $b^{\ell}$.
 
+>  NOTE: Superscripts are not exponentiation unless stated. 
 
-h = 100, 3.36
-h = 784, 
-h = 1000, 
+[We define](http://neuralnetworksanddeeplearning.com/chap2.html) the error $\delta_j^{\ell}$ of neuron $j$ at layer $\ell$ be 
+$$\delta_j^{\ell} = \frac{\partial C}{\partial z_j^\ell}$$ 
 
+Then backpropagating the error can be conducted using the following equations
+$\begin{equation}
+\delta^L = \nabla_a C \cdot \sigma'(z^L)
+\end{equation}$
+$\begin{equation}
+\delta^{\ell} = ((w^{\ell+1})^{T}\delta^{\ell+1}) \cdot \sigma'(z^{\ell})
+\end{equation}$
+$\begin{equation}
+\frac{\partial C}{\partial b_j^\ell} = \delta_j^{\ell}
+\end{equation}$
+$\begin{equation}
+\frac{\partial C}{\partial w_{jk}^\ell} = a_k^{\ell-1}\delta_j^{\ell}
+\end{equation}$
+
+For VAE's, TODO
