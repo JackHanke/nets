@@ -5,6 +5,7 @@ from math import sqrt
 import json
 import matplotlib.pyplot as plt
 from time import time
+from functions.activation_funcs import Identity
 
 class ArtificialNeuralNetwork:
     # dims is tuple of length >=2 that defines the model dimensions
@@ -18,7 +19,7 @@ class ArtificialNeuralNetwork:
         self.num_layers = len(dims)
         self.loss = loss
         if seed is not None: np.random.seed(seed)
-        self.activation_funcs = [-1,-1] + activation_funcs # insert filler to align indexing with textbook
+        self.activation_funcs = [-1, Identity()] + activation_funcs # insert filler to align indexing with textbook
         self.weights = [-1,-1] # insert filler to align indexing with textbook
         self.biases = [-1,-1]
         for dim_index in range(len(dims)-1):
@@ -63,8 +64,8 @@ class ArtificialNeuralNetwork:
             self.weights[layer_index] = ((weight_decay)*self.weights[layer_index]) - (learning_rate*weight_gradient)
             self.biases[layer_index] -= (learning_rate)*bias_gradient
             # computes (layer_index - 1) delta vector
-            if layer_index != 2: delta = np.multiply(product, self.activation_funcs[layer_index-1].function_prime(weighted_inputs[layer_index-1]))
-            elif layer_index == 1: delta = product # TODO uhhh
+            # NOTE this computes first layer delta if the ann is pipelines from another model
+            delta = np.multiply(product, self.activation_funcs[layer_index-1].function_prime(weighted_inputs[layer_index-1]))
         return cost, delta
 
     def train(self, train_data, train_labels, valid_data, valid_labels, batch_size, learning_rate, weight_decay, epochs, verbose=False, plot_learning=False, N=None):

@@ -5,6 +5,7 @@ from models.vae.vae import VariationalAutoEncoder
 from functions.anim_funcs import *
 from datasets.mnist.dataload import get_mnist_data
 from time import time
+import pickle
 
 # TODO not done
 # creates variational autoencoder for MNIST
@@ -39,9 +40,8 @@ def mnist_vae(path=None):
         )
 
         learning_rate = 0.01
-        epochs = 60
-        batch_size = 1
-        # batch_size = 128
+        epochs = 200
+        batch_size = 128
 
         print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
         start = time()
@@ -52,7 +52,7 @@ def mnist_vae(path=None):
             valid_labels=x_valid,
             batch_size=batch_size, 
             learning_rate=learning_rate, 
-            weight_decay=(1-(5*learning_rate)/(x_train.shape[1])),
+            weight_decay=1,
             epochs=epochs, 
             verbose=True,
             plot_learning=True

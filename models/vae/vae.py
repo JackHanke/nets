@@ -1,12 +1,14 @@
 import numpy as np
 from time import time
+import matplotlib.pyplot as plt
 
 class VariationalAutoEncoder:
-    def __init__(self, encodernet, decodernet):
+    def __init__(self, encodernet, decodernet, version_num=0):
         # dimension of latent space
         self.latent_dim = decodernet.dims[0]
         self.encodernet = encodernet
         self.decodernet = decodernet
+        self.version_num = version_num
 
     def _params_vec_to_sample(self, params_vec):
         mu = params_vec[:self.latent_dim]
@@ -20,16 +22,14 @@ class VariationalAutoEncoder:
     #   
     def _forward(self, activation, include=False):
         # run encoder to generate mu and log(sigma)
-        params_vec, encoder_winputs, encoder_activations = self.encodernet._forward(activation, include=include)
+        # params_vec, encoder_winputs, encoder_activations = self.encodernet._forward(activation, include=include)
+        params_vec = self.encodernet._forward(activation, include=False)
         # sample
         z, epsilon = self._params_vec_to_sample(params_vec=params_vec)
         # run decoder to predict image
-        activation, decoder_winputs, decoder_activations = self.decodernet._forward(z, include=include)
-
-        if include: # TODO is this necessary?
-            # return a few things lol
-            return activation, decoder_winputs, decoder_activations, params_vec, encoder_winputs, encoder_activations, epsilon
-
+        # activation, decoder_winputs, decoder_activations = self.decodernet._forward(z, include=include)
+        activation = self.decodernet._forward(z, include=False)
+        
         return activation
 
     # TODO rewrite for VAE
@@ -48,8 +48,8 @@ class VariationalAutoEncoder:
             learning_rate=learning_rate,
             weight_decay=weight_decay
         )
-        print(z_delta)
-        input(z_delta.shape)
+        # print(z_delta)
+        # input(z_delta.shape)
         
         # backprop the encoder
         reg_cost, _ = self.encodernet._backward(
@@ -83,7 +83,7 @@ class VariationalAutoEncoder:
             for batch_index in range(train_data.shape[1]//batch_size):
                 train_data_batch = train_data[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
                 labels_batch = train_labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
-                train_cost, delta = self._backward(
+                train_cost = self._backward(
                     activation=train_data_batch,
                     label=labels_batch,
                     learning_rate=learning_rate,
@@ -96,9 +96,10 @@ class VariationalAutoEncoder:
                 # validation performance
                 validation_inferences = self._forward(activation=valid_data)
                 reg_term = 0
-                for weights_index, weights in enumerate(self.weights):
-                    if weights_index > 1: reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
-                validation_cost = self.loss.cost(validation_inferences, valid_labels) + reg_term
+                # TODO fix reg
+                # for weights_index, weights in enumerate(self.weights):
+                #     if weights_index > 1: reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
+                validation_cost = self.decodernet.loss.cost(validation_inferences, valid_labels) + reg_term
                 valid_cost_history.append(validation_cost)
             if verbose and (epoch % 2) == 0: 
                 print(f'Training cost after epoch {epoch} = {train_cost:.6f}. Completed in {end-start:.4f}s') 

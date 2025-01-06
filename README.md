@@ -42,7 +42,6 @@ Datasets used in this projects include:
         - For viz, have header with "Please draw a __.", and have it draw 1738 (ay).
 
 ## Notes
-
 For layers $2 \leq \ell \leq L$, a feed forward neural network is defined by
 $$z^{\ell} = w^{\ell}a^{\ell-1} + b^{\ell}$$
 $$a^{\ell} = \sigma^{\ell}(z^{\ell})$$

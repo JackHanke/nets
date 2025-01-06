@@ -134,7 +134,8 @@ def mess_with_ae_gen(ae, image, save=False):
     if save: plt.savefig('models/ae/ae-noisy-seven.png')
 
 if __name__ == '__main__':
-    path = f'models/ae/saves/mnist_ae_{0}.pkl'
+    # path = f'models/ae/saves/mnist_ae_{0}.pkl'
+    path = f'models/vae/saves/mnist_vae_{0}.pkl'
     with open(path, 'rb') as f:
         ae = pickle.load(f)
 
