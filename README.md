@@ -66,7 +66,11 @@ For VAE's that consist of encoder $E$ and decoder $D$, we have the following los
 
 $$\cal{L} = \cal{L}_{rec} + \cal{L}_{rec} = \frac{1}{2}\sum_{i}(x_i - x_i')^2 - \frac{1}{2}\sum_{i}(1+2\log(\sigma_i)-\mu_i^2-\sigma_i^2).$$
 
+$$\cal{L}_{reg} = \frac{1}{2}\exp(2\log\sigma) + \frac{1}{2}\mu^2 - \log\sigma - \frac{1}{2}$$
+
 If we let $z$ be the input to
+
+$$z = \mu + \epsilon \exp(\log \sigma)$$
 
 
 $\frac{\partial \cal{L}}{\partial z}$ is computable after a VAE forward pass and a $D$ backprop. 
@@ -79,7 +83,7 @@ $$\frac{\partial \cal{L}_{rec}}{\partial \log{\sigma}} = \frac{\partial \cal{L}_
 
 $$\frac{\partial \cal{L}_{reg}}{\partial \mu} = \mu$$
 
-$$\frac{\partial \cal{L}_{reg}}{\partial \log{\sigma}} = \exp(\log \sigma) - \vec{1}$$
+$$\frac{\partial \cal{L}_{reg}}{\partial \log{\sigma}} = \exp(2\log \sigma) - \vec{1}$$
 
 
 

@@ -53,9 +53,9 @@ class VAEInternal:
         loss_prime_rec_term = np.vstack((label, np.multiply(label, temp)))
 
         # Regularization term
-        loss_prime_reg_term = np.vstack((mu, sig - np.ones(logsig.shape)))
+        loss_prime_reg_term = np.vstack((mu, np.exp(2*logsig) - np.ones(logsig.shape)))
 
-        if self.reg_weight < 1: self.reg_weight += self.reg_weight_update
+        # if self.reg_weight < 1: self.reg_weight += self.reg_weight_update
         # print(f' > Regularization Weight {self.reg_weight}')
 
         # weight and add the two terms
