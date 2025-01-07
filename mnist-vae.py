@@ -20,16 +20,16 @@ def mnist_vae(path=None):
 
     if path is None:
         # hyperparams
-        latent_dim = 15
+        latent_dim = 16
         reg_weight_update = 0.00001
-        learning_rate = 0.01
-        epochs = 200
+        learning_rate = 0.2
+        epochs = 400
         batch_size = 128
         weight_decay = 1
 
         encodernet = ArtificialNeuralNetwork(
             dims=(784, 128, 2*latent_dim),
-            activation_funcs = [Sigmoid(), TanH()], 
+            activation_funcs = [Sigmoid(), Sigmoid()], 
             loss=(VAEInternal(latent_dim=latent_dim, reg_weight_update=reg_weight_update)), # TODO write custom class for this
             seed=None,
             version_num=0

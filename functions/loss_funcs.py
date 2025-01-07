@@ -40,7 +40,7 @@ class VAEInternal:
         mu = activation[:self.latent_dim]
         logsig = activation[self.latent_dim:]
         sig = np.exp(logsig)
-        return -0.5*self.reg_weight*(np.ones(mu.shape) + 2*logsig - np.square(mu) - np.square(sig))
+        return -0.5*(np.ones(mu.shape) + 2*logsig - np.square(mu) - np.square(sig))
 
     def loss_prime(self, activation, label, epsilon=None, **kwargs):
         # here the label is dC/dz, where z = mu + sig*epsilon
@@ -59,7 +59,8 @@ class VAEInternal:
         # print(f' > Regularization Weight {self.reg_weight}')
 
         # weight and add the two terms
-        return loss_prime_rec_term + self.reg_weight*loss_prime_reg_term
+        # return loss_prime_rec_term + self.reg_weight*loss_prime_reg_term
+        return loss_prime_rec_term + loss_prime_reg_term
 
     def cost(self, activation, label):
         return np.sum(self.loss(activation, label))

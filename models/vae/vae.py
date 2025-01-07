@@ -103,11 +103,26 @@ class VariationalAutoEncoder:
                 print(f'Training cost after epoch {epoch} = {train_cost:.6f}. Completed in {end-start:.4f}s') 
                 if valid_data is not None: print(f'Validation cost after epoch {epoch} = {validation_cost:.6f}') 
         
-        if plot_learning: # plot learning curves
-            plt.plot([i for i in range(1, epochs+1)], train_cost_history, label=f'Train')
-            if valid_data is not None:  plt.plot([i for i in range(1, epochs+1)], valid_cost_history, label=f'Validation')
-            plt.title(f'Training and validation cost per epoch')
-            plt.legend(loc='upper right')
-            plt.xlabel(f'Epoch')
-            plt.ylabel(f'Cost (MSE)')
-            plt.show()
+            if plot_learning: # plot learning curves
+                plt.plot([i for i in range(1, len(train_cost_history)+1)], train_cost_history, label=f'Train')
+                if valid_data is not None:  plt.plot([i for i in range(1, len(valid_cost_history)+1)], valid_cost_history, label=f'Validation')
+                plt.title(f'Training and validation cost per epoch')
+                plt.legend(loc='upper right')
+                plt.xlabel(f'Epoch')
+                plt.ylabel(f'Cost (MSE)')
+                # plt.ion()
+                # plt.show()
+                # plt.draw()
+                plt.pause(0.001)
+                plt.cla()
+        plt.show()
+
+    def encode(self, activation):
+        params_vec = self.encodernet._forward(activation, include=False)
+        # sample
+        z, epsilon = self._params_vec_to_sample(params_vec=params_vec)
+        return z
+
+    def decode(self, z):
+        activation = self.decodernet._forward(z, include=False)
+        return activation
