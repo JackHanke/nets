@@ -19,19 +19,26 @@ def mnist_vae(path=None):
     print('MNIST data loaded in.')
 
     if path is None:
-        latent_dim = 10
+        # hyperparams
+        latent_dim = 15
+        reg_weight_update = 0.00001
+        learning_rate = 0.01
+        epochs = 200
+        batch_size = 128
+        weight_decay = 1
+
         encodernet = ArtificialNeuralNetwork(
             dims=(784, 128, 2*latent_dim),
             activation_funcs = [Sigmoid(), TanH()], 
-            loss=(VAEInternal(latent_dim=latent_dim)), # TODO write custom class for this
-            seed=1,
+            loss=(VAEInternal(latent_dim=latent_dim, reg_weight_update=reg_weight_update)), # TODO write custom class for this
+            seed=None,
             version_num=0
         )
         decodernet = ArtificialNeuralNetwork(
             dims=(latent_dim, 128, 784),
             activation_funcs = [Sigmoid(), Sigmoid()], 
             loss=(MSE()), 
-            seed=1,
+            seed=None,
             version_num=0
         )
         vae = VariationalAutoEncoder(
@@ -39,11 +46,7 @@ def mnist_vae(path=None):
             decodernet=decodernet
         )
 
-        learning_rate = 0.01
-        epochs = 200
-        batch_size = 128
-
-        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
+        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate} with reg_weight_update={reg_weight_update}')
         start = time()
         vae.train(
             train_data=x_train, 
@@ -52,7 +55,7 @@ def mnist_vae(path=None):
             valid_labels=x_valid,
             batch_size=batch_size, 
             learning_rate=learning_rate, 
-            weight_decay=1,
+            weight_decay=weight_decay,
             epochs=epochs, 
             verbose=True,
             plot_learning=True

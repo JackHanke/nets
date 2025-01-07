@@ -30,15 +30,17 @@ class CrossEntropy:
         return np.average(self.loss(activation, label))
 
 class VAEInternal:
-    def __init__(self, latent_dim):
+    def __init__(self, latent_dim, reg_weight_update):
         self.name = 'VAE internal loss'
         self.latent_dim = latent_dim
+        self.reg_weight = 0
+        self.reg_weight_update = reg_weight_update
 
     def loss(self, activation, label=None):
         mu = activation[:self.latent_dim]
         logsig = activation[self.latent_dim:]
         sig = np.exp(logsig)
-        return -0.5*(np.ones(mu.shape) + 2*logsig - np.square(mu) - np.square(sig))
+        return -0.5*self.reg_weight*(np.ones(mu.shape) + 2*logsig - np.square(mu) - np.square(sig))
 
     def loss_prime(self, activation, label, epsilon=None, **kwargs):
         # here the label is dC/dz, where z = mu + sig*epsilon
@@ -46,13 +48,18 @@ class VAEInternal:
         logsig = activation[self.latent_dim:]
         sig = np.exp(logsig)
 
-        loss_prime_reg_term = np.vstack((mu, np.multiply(logsig, sig) - np.ones(logsig.shape)))
-        # NOTE a little ugly
-        temp1 = np.multiply(label, epsilon)
-        temp2 = np.multiply(logsig, sig)
-        loss_prime_rec_term = np.vstack((label, np.multiply(temp1, temp2)))
+        # Reconstruction term, NOTE a little ugly
+        temp = np.multiply(epsilon, sig)
+        loss_prime_rec_term = np.vstack((label, np.multiply(label, temp)))
 
-        return loss_prime_rec_term + loss_prime_reg_term
+        # Regularization term
+        loss_prime_reg_term = np.vstack((mu, sig - np.ones(logsig.shape)))
+
+        if self.reg_weight < 1: self.reg_weight += self.reg_weight_update
+        # print(f' > Regularization Weight {self.reg_weight}')
+
+        # weight and add the two terms
+        return loss_prime_rec_term + self.reg_weight*loss_prime_reg_term
 
     def cost(self, activation, label):
         return np.sum(self.loss(activation, label))

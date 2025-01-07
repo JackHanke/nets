@@ -48,8 +48,6 @@ class VariationalAutoEncoder:
             learning_rate=learning_rate,
             weight_decay=weight_decay
         )
-        # print(z_delta)
-        # input(z_delta.shape)
         
         # backprop the encoder
         reg_cost, _ = self.encodernet._backward(
