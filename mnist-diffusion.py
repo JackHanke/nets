@@ -21,14 +21,13 @@ def get_and_encode_mnist(ae_path):
     with open(path_str, 'wb') as f:
         pickle.dump(train_data, file=f)
 
-    input('done')
-
     with open(ae_path, 'rb') as f:
         ae = pickle.load(f)
 
-    encoded_x_train = ae.encoder_inference(activation=x_train)
+    # encoded_x_train = ae.encoder_inference(activation=x_train)
+    encoded_x_train = ae.encode(activation=x_train)
 
-    path_str = f'datasets/mnist/encoded-mnist.pkl'
+    path_str = f'datasets/mnist/vae-encoded-mnist.pkl'
     with open(path_str, 'wb') as f:
         pickle.dump(encoded_x_train, file=f)
 
@@ -41,20 +40,21 @@ def get_and_encode_mnist(ae_path):
 def mnist_diffusion(path=None):
     if path is None:
         # with open(f'datasets/mnist/encoded-mnist.pkl', 'rb') as f:
-        with open(f'datasets/mnist/mnist-xtrain.pkl', 'rb') as f:
+        with open(f'datasets/mnist/vae-encoded-mnist.pkl', 'rb') as f:
             train_data = pickle.load(f)
         with open(f'datasets/mnist/encoded-mnist-ytrain.pkl', 'rb') as f:
             train_labels = pickle.load(f)
 
-        # NOTE just valid dataset
-        # train_data, train_labels = data
-        # train_labels = y_train
         print('MNIST data loaded in.')
 
-        T, x_dim, y_dim, color_dim, condition_dim = 16, 28, 28, 1, 10
+        T, x_dim, y_dim, color_dim, condition_dim = 16, 8, 1, 1, 10
+        learning_rate = 5*(10**(-5))
+        epochs = 150
+        batch_size = 256
+
         diff = Diffusion(
-            dims=(train_data.shape[0]+condition_dim+T, 10000, 10000, 4000, 4000, train_data.shape[0]),
-            activation_funcs = [TanH(), TanH(), TanH(), TanH(), Identity()], 
+            dims=(train_data.shape[0]+condition_dim+T, 1000, 1000, 1000, train_data.shape[0]),
+            activation_funcs = [TanH(), TanH(), TanH(), Identity()], 
             loss=(MSE()), 
             seed=None,
             version_num=0,
@@ -64,11 +64,6 @@ def mnist_diffusion(path=None):
             color_dim=color_dim,
             condition_dim=condition_dim
         )
-
-        learning_rate = 2*(10**(-4))
-        epochs = 20
-        # batch_size = 1
-        batch_size = 256
 
         print(f'Beginning training {diff.num_params()} parameters for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
         start = time()
@@ -91,27 +86,30 @@ def mnist_diffusion(path=None):
     return diff
 
 if __name__ == '__main__':
-    # get_and_encode_mnist(ae_path=f'models/ae/saves/mnist_ae_{0}.pkl')
+    # ae_path = f'models/ae/saves/mnist_ae_{0}.pkl'
+    # ae_path = f'models/vae/saves/mnist_vae_{0}.pkl'
+    # get_and_encode_mnist(ae_path=ae_path)
 
     # get autoencoder
-    with open(f'models/ae/saves/mnist_ae_{0}.pkl', 'rb') as f:
+    with open(f'models/vae/saves/mnist_vae_{0}.pkl', 'rb') as f:
         ae = pickle.load(f)
 
-    # diff = mnist_diffusion(path=None)
-    diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+    diff = mnist_diffusion(path=None)
+    # diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
 
-    vec_history = diff.gen(condition=9, return_history=True)
-    anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
+    vec_history = diff.gen(condition=1, return_history=True)
+    # anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
 
     # encode inference
-    # history = []
-    # for vec in vec_history:
-    #     temp = np.reshape(vec, (-1,1))
-    #     im = ae.decoder_inference(activation=temp)
-    #     im = np.reshape(im, (28, 28))
-    #     history.append(im)
+    history = []
+    for vec in vec_history:
+        temp = np.reshape(vec, (-1,1))
+        # im = ae.decoder_inference(activation=temp)
+        im = ae.decode(z=temp)
+        im = np.reshape(im, (28, 28))
+        history.append(im)
 
-    # anim_ims(arr=history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
+    anim_ims(arr=history, save_path=f'models/diffusion/anim3.gif', fps=4, show=False)
 
 
     # TODO remove

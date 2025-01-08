@@ -71,7 +71,6 @@ def visualize_input_output(ae):
     plt.show()
     plt.savefig('models/ae/ae-input-output.png')
 
-
 # 
 def mnist_noise_anim(network, save_path):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
@@ -168,6 +167,7 @@ def mess_with_ae_gen(ae, image, save=False):
 if __name__ == '__main__':
     # path = f'models/ae/saves/mnist_ae_{0}.pkl'
     path = f'models/vae/saves/mnist_vae_{0}.pkl'
+    # path = f'models/vae/saves/mnist_vae_{1}.pkl'
     with open(path, 'rb') as f:
         ae = pickle.load(f)
 

@@ -6,6 +6,7 @@ This repo hosts custom implementations of **Numpy-only** neural network architec
     - ADAM optimizer
     - Dropout
     - Automatic differentiation
+    - GPU-ify with [CuPy](https://cupy.dev/)
 - ✓ Autoencoder
 - Variational autoencoder
 - Denoising diffusion model

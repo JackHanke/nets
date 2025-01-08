@@ -174,7 +174,8 @@ class Diffusion(ArtificialNeuralNetwork):
                     plt.title(title_str)
                     plt.show()
 
-                train_cost = self._backward(
+                # NOTE this is an issue
+                train_cost, _ = self._backward(
                     activation=vec, 
                     label=epsilon, 
                     learning_rate=learning_rate, 
@@ -190,8 +191,8 @@ class Diffusion(ArtificialNeuralNetwork):
                     validation_cost = self.loss.cost(validation_inferences, epsilon)
                     valid_cost_history.append(np.log(validation_cost))
 
-                print(f' > cost for batch {batch_index} = {train_cost} ({time()-start_batch:.4f}s)') # TODO remove this
-                train_cost_history.append(np.log(train_cost)) # NOTE logged
+                # print(f' > cost for batch {batch_index} = {train_cost} ({time()-start_batch:.4f}s)') # TODO remove this
+            train_cost_history.append(train_cost) # NOTE logged
             
                 # if (batch_index % 100) == 0:
                     # vec_history = self.gen(num_gen=1000, return_history=True)
@@ -207,15 +208,19 @@ class Diffusion(ArtificialNeuralNetwork):
                     pickle.dump(self, file=f)
                 print(f'Model saved at: {path_str}')
         
-        if plot_learning: # plot learning curves
-            # train_cost_history = train_cost_history[500:]
-            # valid_cost_history = valid_cost_history[500:]
-            plt.plot([i for i in range(len(train_cost_history))], train_cost_history, label=f'Train')
-            if valid_data is not None: plt.plot([i for i in range(len(valid_cost_history))], valid_cost_history, label=f'Valid')
-            plt.title(f'Training and validation cost per epoch')
-            plt.legend(loc='upper right')
-            plt.xlabel(f'Epoch')
-            plt.ylabel(f'Cost (MSE)')
+            if plot_learning: # plot learning curves
+                # train_cost_history = train_cost_history[500:]
+                # valid_cost_history = valid_cost_history[500:]
+                plt.plot([i for i in range(len(train_cost_history))], train_cost_history, label=f'Train')
+                if valid_data is not None: plt.plot([i for i in range(len(valid_cost_history))], valid_cost_history, label=f'Valid')
+                plt.title(f'Training and validation cost per epoch')
+                plt.legend(loc='upper right')
+                plt.xlabel(f'Epoch')
+                plt.ylabel(f'Cost (MSE)')
+                plt.pause(0.000001)
+            if plot_learning and epoch != epochs-1: plt.cla()
+        if plot_learning:
+            plt.title(f'Completed {epochs} epochs at train cost {train_cost:.6f}.')
             plt.show()
 
     # generate num_gen image(s) with a given condition(index for one-hot), 

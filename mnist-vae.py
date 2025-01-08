@@ -23,7 +23,7 @@ def mnist_vae(path=None):
         latent_dim = 8
         reg_weight_update = 0.00001
         learning_rate = 0.01
-        epochs = 650
+        epochs = 1700
         batch_size = 128
         weight_decay = 1
 
@@ -39,7 +39,7 @@ def mnist_vae(path=None):
             activation_funcs = [LeakyReLu(), LeakyReLu(), Sigmoid()], 
             loss=(MSE()), 
             seed=None,
-            version_num=0
+            version_num=1
         )
         vae = VariationalAutoEncoder(
             encodernet=encodernet,
