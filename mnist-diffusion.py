@@ -24,7 +24,7 @@ def get_and_encode_mnist(ae_path):
     with open(ae_path, 'rb') as f:
         ae = pickle.load(f)
 
-    # encoded_x_train = ae.encoder_inference(activation=x_train)
+    # encoded_x_train = ae.encode(activation=x_train)
     encoded_x_train = ae.encode(activation=x_train)
 
     path_str = f'datasets/mnist/vae-encoded-mnist.pkl'
@@ -48,12 +48,12 @@ def mnist_diffusion(path=None):
         print('MNIST data loaded in.')
 
         T, x_dim, y_dim, color_dim, condition_dim = 16, 8, 1, 1, 10
-        learning_rate = 1*(10**(-3))
+        learning_rate = 1*(10**(-4))
         epochs = 150
         batch_size = 256
 
         diff = Diffusion(
-            dims=(train_data.shape[0]+condition_dim+T, 1000, 1000, 1000, train_data.shape[0]),
+            dims=(train_data.shape[0]+condition_dim+T, 1000, 500, 500, train_data.shape[0]),
             activation_funcs = [TanH(), TanH(), TanH(), Identity()], 
             loss=(MSE()), 
             seed=None,
@@ -97,15 +97,15 @@ if __name__ == '__main__':
     # diff = mnist_diffusion(path=None)
     diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
 
-    vec_history = diff.gen(condition=9, return_history=True)
+    vec_history = diff.gen(condition=0, return_history=True)
     # anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
 
     # encode inference
     history = []
     for vec in vec_history:
         temp = np.reshape(vec, (-1,1))
-        # im = ae.decoder_inference(activation=temp)
-        im = ae.decode(z=temp)
+        # im = ae.decode(activation=temp)
+        im = ae.decode(activation=temp)
         im = np.reshape(im, (28, 28))
         history.append(im)
 

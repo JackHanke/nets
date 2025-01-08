@@ -19,7 +19,7 @@ def anim_ims(arr, save_path, fps=10, show=False):
     a = arr[0]
     im = plt.imshow(a, vmin=0, vmax=1)
     plt.set_cmap('Greys')
-    plt.clim(0,1)
+    # plt.clim(0,1)
     # plt.clim(-1,1)
     plt.axis('off')
 
@@ -27,6 +27,7 @@ def anim_ims(arr, save_path, fps=10, show=False):
         if i % fps == 0: print( '.', end ='' )
         im.set_array(arr[i])
         plt.title(f't={i} ({np.min(arr[i]):.2f}, {np.max(arr[i]):.2f})')
+        # plt.title(f'     Autoencoder                    Variational Autoencoder')
         return [im]
 
     anim = animation.FuncAnimation(

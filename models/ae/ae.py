@@ -22,14 +22,14 @@ class AutoEncoder(ArtificialNeuralNetwork):
         if include: return activation, weighted_inputs, activations
         else: return activation
 
-    def encoder_inference(self, activation):
+    def encode(self, activation):
         for layer_index in range(2, self.cutoff):
             weighted_input = np.dot(self.weights[layer_index], activation) + \
                             np.dot(self.biases[layer_index], np.ones((1,activation.shape[1])))
             activation = self.activation_funcs[layer_index].function(weighted_input)
         return activation
 
-    def decoder_inference(self, activation):
+    def decode(self, activation):
         for layer_index in range(self.cutoff, self.num_layers+1):
             weighted_input = np.dot(self.weights[layer_index], activation) + \
                             np.dot(self.biases[layer_index], np.ones((1,activation.shape[1])))

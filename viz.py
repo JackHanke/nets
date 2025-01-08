@@ -2,12 +2,15 @@ from datasets.mnist.dataload import get_mnist_data
 from functions.anim_funcs import *
 import pickle
 
+# Various animation and visualization scripts
 # TODO clean up
 
+# 
 def add_noise(im, noise, alpha):
     result =  alpha*noise + (1-alpha)*im
     return result
 
+# visualizes multiple input, output pairs of a given autoencoder
 def visualize_input_output(ae):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
@@ -71,7 +74,7 @@ def visualize_input_output(ae):
     plt.show()
     plt.savefig('models/ae/ae-input-output.png')
 
-# 
+# animate the transition from data manifold to random data point in data space
 def mnist_noise_anim(network, save_path):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
@@ -93,8 +96,8 @@ def mnist_noise_anim(network, save_path):
 
     anim(im_history, save_path=save_path)
 
-# animate journey between laten representation of a '2' and a '7'
-def mnist_ae_extrap_anim(ae):
+# animate journey between laten representation of a '2' and a '7', comparing between AE and VAE
+def mnist_ae_extrap_anim(ae, vae):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
         train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
         train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
@@ -105,45 +108,55 @@ def mnist_ae_extrap_anim(ae):
 
     im1 = x_test[:, 0].reshape(-1,1) # NOTE this is an image of a '2'
     im2 = x_test[:, 1].reshape(-1,1) # NOTE this is an image of a '7'
-    latent1 = ae.encoder_inference(activation=im1)
-    latent2 = ae.encoder_inference(activation=im2)
+    latent1_ae, latent1_vae = ae.encode(activation=im1), vae.encodernet._forward(activation=im1)
+    latent2_ae, latent2_vae = ae.encode(activation=im2), vae.encodernet._forward(activation=im2)
 
-    latents = []
+    latents_ae, latents_vae = [], []
     alpha = 0.01
     for a in np.arange(start=0, stop=1, step=alpha):
-        latent_res = latent1*a + latent2*(1-a)
-        latents.append(latent_res)
+        latent_res_ae = latent1_ae*a + latent2_ae*(1-a)
+        latent_res_vae = latent1_vae*a + latent2_vae*(1-a)
+        latents_ae.append(latent_res_ae)
+        latents_vae.append(latent_res_vae)
     
-    def make_latent_im(ae, latent):
-        gen_im = ae.decoder_inference(activation=latent)
-        gen_im = gen_im.reshape(28,28)
-        latent = latent.reshape(6,6)
-        padding1 = np.zeros((11,6))
-        padding2 = np.zeros((28,11))
-        latent_im_padded = np.vstack((padding1, latent, padding1))
-        latent_im_padded = np.hstack((padding2, latent_im_padded, padding2))
-        latent_im_padded = np.vstack((gen_im, latent_im_padded))
-        return latent_im_padded
+    def make_latent_im(ae, latent_ae, vae, latent_vae):
+        gen_im_ae = ae.decode(activation=latent_ae)
+        gen_im_ae = gen_im_ae.reshape(28,28)
+        gen_im_vae = vae.decode(activation=latent_vae[:8])
+        gen_im_vae = gen_im_vae.reshape(28,28)
+
+        latent_ae = latent_ae.reshape(4, 4)
+        latent_vae = latent_vae.reshape(4, 4)
+
+        padding0 = np.zeros((28,2))
+        padding1 = np.zeros((4,28+2+28))
+        padding2 = np.zeros((4,12))
+        padding3 = np.zeros((4,2))
+
+        final_im_gen = np.hstack((gen_im_ae, padding0, gen_im_vae))
+        final_im_latent = np.hstack((padding2, latent_ae, padding2, padding3, padding2, latent_vae, padding2))
+        final_im = np.vstack((final_im_gen, padding1, final_im_latent, padding1))
+        return final_im
 
     im_history = []
-    for latent in latents:
-        im = make_latent_im(ae=ae, latent=latent)
+    for latent_ae, latent_vae in zip(latents_ae, latents_vae):
+        im = make_latent_im(ae=ae, latent_ae=latent_ae, vae=vae, latent_vae=latent_vae)
         # thing = np.hstack((im, noise)) # NOTE probably delete or figure out how to look better
         im_history.append(im)
 
-    anim(im_history, save_path=f'models/ae/extrap-anim.gif')
+    anim_ims(im_history, save_path=f'models/ae/extrap-anim.gif')
 
 # 
 def mess_with_ae_gen(ae, image, save=False):
     noise = np.random.uniform(low=0, high=1, size=(6,6))
 
     # inference = ae._forward(activation=original)
-    latent = ae.encoder_inference(activation=image)
-    inference = ae.decoder_inference(activation=latent)
+    latent = ae.encode(activation=image)
+    inference = ae.decode(activation=latent)
 
     latent_im = latent.reshape(6,6)
     noisy_latent_im = add_noise(im=latent_im, noise=noise, alpha=0.35)
-    noisy_inf = ae.decoder_inference(activation=noisy_latent_im.reshape(36,1))
+    noisy_inf = ae.decode(activation=noisy_latent_im.reshape(36,1))
 
     padding = np.zeros((11,6))
     latent_im_padded = np.vstack((padding, latent_im, padding))
@@ -165,12 +178,13 @@ def mess_with_ae_gen(ae, image, save=False):
     if save: plt.savefig('models/ae/ae-noisy-seven.png')
 
 if __name__ == '__main__':
-    # path = f'models/ae/saves/mnist_ae_{0}.pkl'
-    path = f'models/vae/saves/mnist_vae_{0}.pkl'
-    # path = f'models/vae/saves/mnist_vae_{1}.pkl'
+    path = f'models/ae/saves/mnist_ae_{0}.pkl'
     with open(path, 'rb') as f:
         ae = pickle.load(f)
+    path = f'models/vae/saves/mnist_vae_{0}.pkl'
+    with open(path, 'rb') as f:
+        vae = pickle.load(f)
 
-    visualize_input_output(ae=ae)
+    # visualize_input_output(ae=ae)
 
-    # mnist_ae_extrap_anim(ae=ae)
+    mnist_ae_extrap_anim(ae=ae, vae=vae)

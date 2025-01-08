@@ -10,22 +10,24 @@ class VariationalAutoEncoder:
         self.decodernet = decodernet
         self.version_num = version_num
 
-    def _params_vec_to_sample(self, params_vec):
+    # make sample z from parameter information
+    def _params_vec_to_sample(self, params_vec, noise=None):
         mu = params_vec[:self.latent_dim]
         logsig = params_vec[self.latent_dim:]
         # get noise
-        epsilon = np.random.normal(loc=0, scale=1, size=(logsig.shape))
+        if noise is None: epsilon = np.random.normal(loc=0, scale=1, size=(logsig.shape))
+        elif noise is not None: epsilon = noise
         # latent variable calculation from noise
         z = mu + np.multiply(np.exp(logsig), epsilon)
         return z, epsilon
 
     #   
-    def _forward(self, activation, include=False):
+    def _forward(self, activation, include=False, noise=None):
         # run encoder to generate mu and log(sigma)
         # params_vec, encoder_winputs, encoder_activations = self.encodernet._forward(activation, include=include)
         params_vec = self.encodernet._forward(activation, include=False)
         # sample
-        z, epsilon = self._params_vec_to_sample(params_vec=params_vec)
+        z, epsilon = self._params_vec_to_sample(params_vec=params_vec, noise=noise)
         # run decoder to predict image
         # activation, decoder_winputs, decoder_activations = self.decodernet._forward(z, include=include)
         activation = self.decodernet._forward(z, include=False)
@@ -116,12 +118,13 @@ class VariationalAutoEncoder:
             plt.title(f'Completed {epochs} epochs at train cost {train_cost:.6f}.')
             plt.show()
 
-    def encode(self, activation):
+    def encode(self, activation, noise=None):
         params_vec = self.encodernet._forward(activation, include=False)
         # sample
-        z, epsilon = self._params_vec_to_sample(params_vec=params_vec)
+        z, epsilon = self._params_vec_to_sample(params_vec=params_vec, noise=noise)
         return z
 
-    def decode(self, z):
-        activation = self.decodernet._forward(z, include=False)
+    def decode(self, activation):
+        # activation is the typically denoted 'z'
+        activation = self.decodernet._forward(activation, include=False)
         return activation

@@ -8,7 +8,7 @@ from time import time
 import pickle
 
 # prepares dataset for denoising autoencoder
-# 
+# TODO clean up and move
 
 def noise_dataset(data, T):
     noisy_data = []
@@ -53,18 +53,18 @@ def mnist_ae(path=None):
     # print(f'Noisy dataset made')
 
     if path is None:
+        learning_rate = 0.05
+        epochs = 100
+        batch_size = 128
+
         ae = AutoEncoder(
-            dims=(784, 256, 49, 256, 784),
-            activation_funcs = [TanH(), TanH(), TanH(), Sigmoid()], 
+            dims=(784, 128, 128, 16, 128, 128, 784),
+            activation_funcs = [LeakyReLu(), LeakyReLu(), LeakyReLu(), LeakyReLu(), LeakyReLu(), Sigmoid()], 
             loss=(MSE()), 
             seed=1,
             version_num=0,
             add_noise=True
         )
-
-        learning_rate = 0.05
-        epochs = 100
-        batch_size = 128
 
         print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
         start = time()

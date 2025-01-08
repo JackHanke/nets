@@ -23,7 +23,7 @@ def mnist_vae(path=None):
         latent_dim = 8
         reg_weight_update = 0.00001
         learning_rate = 0.01
-        epochs = 1700
+        epochs = 1000
         batch_size = 128
         weight_decay = 1
 
