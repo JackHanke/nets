@@ -48,7 +48,7 @@ def mnist_diffusion(path=None):
         print('MNIST data loaded in.')
 
         T, x_dim, y_dim, color_dim, condition_dim = 16, 8, 1, 1, 10
-        learning_rate = 5*(10**(-5))
+        learning_rate = 1*(10**(-3))
         epochs = 150
         batch_size = 256
 
@@ -94,10 +94,10 @@ if __name__ == '__main__':
     with open(f'models/vae/saves/mnist_vae_{0}.pkl', 'rb') as f:
         ae = pickle.load(f)
 
-    diff = mnist_diffusion(path=None)
-    # diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+    # diff = mnist_diffusion(path=None)
+    diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
 
-    vec_history = diff.gen(condition=1, return_history=True)
+    vec_history = diff.gen(condition=9, return_history=True)
     # anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
 
     # encode inference
@@ -108,6 +108,8 @@ if __name__ == '__main__':
         im = ae.decode(z=temp)
         im = np.reshape(im, (28, 28))
         history.append(im)
+
+    history += [im for _ in range(12)]
 
     anim_ims(arr=history, save_path=f'models/diffusion/anim3.gif', fps=4, show=False)
 

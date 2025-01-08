@@ -8,8 +8,8 @@ This repo hosts custom implementations of **Numpy-only** neural network architec
     - Automatic differentiation
     - GPU-ify with [CuPy](https://cupy.dev/)
 - ✓ Autoencoder
-- Variational autoencoder
-- Denoising diffusion model
+- ✓ Variational autoencoder
+- ✓ Latent Denoising diffusion model
     - Classifier free guidance
 - Convolutional neural network (CNN)
 - Transformer
@@ -67,7 +67,7 @@ For VAE's that consist of encoder $E$ and decoder $D$, we have the following los
 
 $$\cal{L} = \cal{L}_{rec} + \cal{L}_{rec} = \frac{1}{2}\sum_{i}(x_i - x_i')^2 - \frac{1}{2}\sum_{i}(1+2\log(\sigma_i)-\mu_i^2-\sigma_i^2).$$
 
-$$\cal{L}_{reg} = \frac{1}{2}\exp(2\log\sigma) + \frac{1}{2}\mu^2 - \log\sigma - \frac{1}{2}$$
+$$\vec{\cal{L}}_{reg} = \frac{1}{2}\exp(2\log\sigma) + \frac{1}{2}\mu^2 - \log\sigma - \frac{1}{2}$$
 
 If we let $z$ be the input to
 

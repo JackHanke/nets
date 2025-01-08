@@ -213,7 +213,7 @@ class Diffusion(ArtificialNeuralNetwork):
                 # valid_cost_history = valid_cost_history[500:]
                 plt.plot([i for i in range(len(train_cost_history))], train_cost_history, label=f'Train')
                 if valid_data is not None: plt.plot([i for i in range(len(valid_cost_history))], valid_cost_history, label=f'Valid')
-                plt.title(f'Training and validation cost per epoch')
+                plt.title(f'Epoch {epoch} has train cost {train_cost:.6f}')
                 plt.legend(loc='upper right')
                 plt.xlabel(f'Epoch')
                 plt.ylabel(f'Cost (MSE)')
