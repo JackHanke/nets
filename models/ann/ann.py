@@ -1,17 +1,68 @@
-# this code closely follows the textbook http://neuralnetworksanddeeplearning.com/
-import numpy as np
-import random
-from math import sqrt
 import json
-import matplotlib.pyplot as plt
+import random
+import numpy as np
 from time import time
+import matplotlib.pyplot as plt 
 from functions.activation_funcs import Identity
 
+# example train script for ANN
+def train_ann(model, train_data, train_labels, valid_data, valid_labels, batch_size, epochs, optimizer, verbose=False, plot_learning=False, N=None):
+    train_cost_history, valid_cost_history = [], []
+    if N is not None: N = train_data.shape[1]
+    for epoch in range(epochs):
+        start = time()
+        # TODO make this stochastic 
+        for batch_index in range(train_data.shape[1]//batch_size):
+            train_data_batch = train_data[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
+            labels_batch = train_labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
+
+            train_cost, delta = model._backward(
+                activation = train_data_batch,
+                label = labels_batch,
+                N = N
+            )
+            
+            optimizer.step(
+                weights = model.weights, 
+                weights_gradients = model.weights_gradients,
+                biases = model.biases,
+                biases_gradients = model.biases_gradients
+            )
+
+        train_cost_history.append(train_cost)
+        end = time()
+        if valid_data is not None:
+            # validation performance
+            validation_inferences = model._forward(activation=valid_data)
+            validation_cost = model.loss.cost(validation_inferences, valid_labels)
+            valid_cost_history.append(validation_cost)
+        if verbose and (epoch % 2) == 0: 
+            print(f'Training cost after epoch {epoch} = {train_cost:.6f}. Completed in {end-start:.4f}s') 
+            if valid_data is not None: print(f'Validation cost after epoch {epoch} = {validation_cost:.6f}') 
+    
+    if plot_learning: # plot learning curves
+        plt.plot([i for i in range(1, epochs+1)], train_cost_history, label=f'Train')
+        if valid_data is not None:  plt.plot([i for i in range(1, epochs+1)], valid_cost_history, label=f'Validation')
+        plt.title(f'Training and validation cost per epoch')
+        plt.legend(loc='upper right')
+        plt.xlabel(f'Epoch')
+        plt.ylabel(f'Cost (MSE)')
+        plt.show()
+
+# example test script for ANN 
+def test_ann(model, test_data, test_labels, verbose=False):
+    results_vector = model.inference(data=test_data)
+    correct_inferences = np.equal(results_vector, test_labels).sum()
+    total_inferences = (test_labels.shape[1])
+    if verbose: print(f'Correct inferences={correct_inferences} out of {total_inferences} total inferences.')
+    return correct_inferences/total_inferences
+
+# Custom ANN class
+#   this code follows the notation from the textbook http://neuralnetworksanddeeplearning.com/
 class ArtificialNeuralNetwork:
     # dims is tuple of length >=2 that defines the model dimensions
     #   ie. (784, 15, 10) means a 784 x 15 array and a 15 x 10 array 
     # activations is tuple of activation function objects
-    # loss is a tuple of a loss function and its derivative that accepts an activation vector and label vector
     def __init__(self, dims, activation_funcs, loss, seed=None, version_num=0):
         self.version_num = str(version_num)
         self.dims = dims
@@ -21,9 +72,11 @@ class ArtificialNeuralNetwork:
         if seed is not None: np.random.seed(seed)
         self.activation_funcs = [-1, Identity()] + activation_funcs # insert filler to align indexing with textbook
         self.weights = [-1,-1] # insert filler to align indexing with textbook
+        self.weights_gradients = [-1 for _ in range(len(dims)+1)]
         self.biases = [-1,-1]
+        self.biases_gradients = [-1 for _ in range(len(dims)+1)]
         for dim_index in range(len(dims)-1):
-            self.weights.append(np.random.normal(loc=0, scale=1/sqrt(dims[0]), size=(dims[dim_index+1], dims[dim_index])))
+            self.weights.append(np.random.normal(loc=0, scale=1/np.sqrt(dims[0]), size=(dims[dim_index+1], dims[dim_index])))
             self.biases.append(np.random.normal(loc=0, scale=1, size=(dims[dim_index+1], 1)))
 
     # forward pass
@@ -40,19 +93,12 @@ class ArtificialNeuralNetwork:
         else: return activation
 
     # forward and backward pass
-    def _backward(self, activation, label, learning_rate, weight_decay, N=None, epsilon=None):
+    def _backward(self, activation, label, N=None, epsilon=None):
         # forward pass
         activation, weighted_inputs, activations = self._forward(activation, include=True)
         # compute cost of forward pass for verbose output
-        reg_term = 0
-        if N is not None: # if regularization
-            for weights_index, weights in enumerate(self.weights):
-                if weights_index > 1:
-                    reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
-        cost = self.loss.cost(activation, label) + reg_term
-
-        # backward pass
-        # final layer
+        cost = self.loss.cost(activation, label)
+        # backward pass, starting with final layer
         delta = np.multiply(self.loss.loss_prime(activation, label, epsilon=epsilon), self.activation_funcs[-1].function_prime(weighted_inputs[-1]))
         #remaining layers
         for layer_index in range(self.num_layers, 1, -1):
@@ -61,62 +107,19 @@ class ArtificialNeuralNetwork:
             m = activations[layer_index-1].shape[1] # batch_size
             weight_gradient = (np.dot(delta, activations[layer_index-1].transpose()))*(1/m)
             bias_gradient = (delta).mean(axis=1, keepdims=True)
-            self.weights[layer_index] = ((weight_decay)*self.weights[layer_index]) - (learning_rate*weight_gradient)
-            self.biases[layer_index] -= (learning_rate)*bias_gradient
+            # add computed gradients
+            self.weights_gradients[layer_index] = weight_gradient
+            self.biases_gradients[layer_index] = bias_gradient
             # computes (layer_index - 1) delta vector
             # NOTE this computes first layer delta if the ann is pipelines from another model
             delta = np.multiply(product, self.activation_funcs[layer_index-1].function_prime(weighted_inputs[layer_index-1]))
         return cost, delta
 
-    def train(self, train_data, train_labels, valid_data, valid_labels, batch_size, learning_rate, weight_decay, epochs, verbose=False, plot_learning=False, N=None):
-        train_cost_history, valid_cost_history = [], []
-        if N is not None: N = train_data.shape[1]
-        for epoch in range(epochs):
-            start = time()
-            # TODO make this stochastic 
-            for batch_index in range(train_data.shape[1]//batch_size):
-                train_data_batch = train_data[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
-                labels_batch = train_labels[:, range(batch_index*batch_size, ((batch_index+1)*batch_size))]
-                train_cost, delta = self._backward(
-                    activation=train_data_batch,
-                    label=labels_batch,
-                    learning_rate=learning_rate,
-                    weight_decay=weight_decay,
-                    N=N
-                )
-            train_cost_history.append(train_cost)
-            end = time()
-            if valid_data is not None:
-                # validation performance
-                validation_inferences = self._forward(activation=valid_data)
-                reg_term = 0
-                for weights_index, weights in enumerate(self.weights):
-                    if weights_index > 1: reg_term += ((weight_decay / (2*N)) * np.dot(weights, weights.transpose()).sum())
-                validation_cost = self.loss.cost(validation_inferences, valid_labels) + reg_term
-                valid_cost_history.append(validation_cost)
-            if verbose and (epoch % 2) == 0: 
-                print(f'Training cost after epoch {epoch} = {train_cost:.6f}. Completed in {end-start:.4f}s') 
-                if valid_data is not None: print(f'Validation cost after epoch {epoch} = {validation_cost:.6f}') 
-        
-        if plot_learning: # plot learning curves
-            plt.plot([i for i in range(1, epochs+1)], train_cost_history, label=f'Train')
-            if valid_data is not None:  plt.plot([i for i in range(1, epochs+1)], valid_cost_history, label=f'Validation')
-            plt.title(f'Training and validation cost per epoch')
-            plt.legend(loc='upper right')
-            plt.xlabel(f'Epoch')
-            plt.ylabel(f'Cost (MSE)')
-            plt.show()
-
+    # conduct an inference for a one-hot prediction task
     def inference(self, data):
         return np.argmax(self._forward(data), axis=0, keepdims=True)
 
-    def test(self, test_data, test_labels, verbose=False):
-        results_vector = self.inference(data=test_data)
-        correct_inferences = np.equal(results_vector, test_labels).sum()
-        total_inferences = (test_labels.shape[1])
-        if verbose: print(f'Correct inferences={correct_inferences} out of {total_inferences} total inferences.')
-        return correct_inferences/total_inferences
-
+    # get the number of parameters
     def num_params(self):
         num_parameters = 0
         for weight_matrix in self.weights[2:]:

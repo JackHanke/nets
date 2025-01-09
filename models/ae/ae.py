@@ -8,6 +8,7 @@ class AutoEncoder(ArtificialNeuralNetwork):
         self.add_noise = add_noise
         self.cutoff = ((self.num_layers)//2) + 2
 
+    # full forward pass
     def _forward(self, activation, include=False):
         weighted_inputs = [-1, activation]
         activations = [-1, activation]
@@ -22,6 +23,7 @@ class AutoEncoder(ArtificialNeuralNetwork):
         if include: return activation, weighted_inputs, activations
         else: return activation
 
+    # encode activation to latent representatioin
     def encode(self, activation):
         for layer_index in range(2, self.cutoff):
             weighted_input = np.dot(self.weights[layer_index], activation) + \
@@ -29,6 +31,7 @@ class AutoEncoder(ArtificialNeuralNetwork):
             activation = self.activation_funcs[layer_index].function(weighted_input)
         return activation
 
+    # decode latent representations
     def decode(self, activation):
         for layer_index in range(self.cutoff, self.num_layers+1):
             weighted_input = np.dot(self.weights[layer_index], activation) + \

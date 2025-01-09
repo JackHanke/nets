@@ -2,7 +2,8 @@
 This repo hosts custom implementations of **Numpy-only** neural network architectures. Implemented and planned architectures include: 
 - ✓ An artificial neural network (ANN)
     - ✓ Regularization (written as weight decay)
-    - Isolate weight update and optimizer from gradient calculating process
+    - ✓ Isolate weight update and optimizer from gradient calculating process
+    - Regularization term for loss obj
     - Variable learning rate support
     - [ADAM optimizer](https://arxiv.org/pdf/1412.6980)
     - GPU-ify with [CuPy](https://cupy.dev/)
@@ -29,6 +30,8 @@ Datasets used in this projects include:
 |-|-|-|-|-|-|-|-|
 | ANN | (784,) | L2 | 0 | 0 | 0 | MNIST | 0 |
 | ANN | (4,) | L2 | 0 | 0 | 0 | Iris | 0 |
+
+* Performance for training a (784, 30, 10) ANN for 100 epochs is 0.3232 minutes on CPU only. 
 
 ## Resources
 - [Introduction to Deep Learning](http://neuralnetworksanddeeplearning.com/) by Michael Nielsen

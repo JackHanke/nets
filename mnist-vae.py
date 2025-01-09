@@ -1,13 +1,13 @@
 from models.ann.ann import ArtificialNeuralNetwork
 from functions.activation_funcs import *
 from functions.loss_funcs import *
-from models.vae.vae import VariationalAutoEncoder
+from models.vae.vae import VariationalAutoEncoder, train_vae
 from functions.anim_funcs import *
+from functions.optimizers import *
 from datasets.mnist.dataload import get_mnist_data
 from time import time
 import pickle
 
-# TODO not done
 # creates variational autoencoder for MNIST
 def mnist_vae(path=None):
     x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
@@ -22,41 +22,45 @@ def mnist_vae(path=None):
         # hyperparams
         latent_dim = 8
         reg_weight_update = 0.00001
-        learning_rate = 0.01
         epochs = 1000
         batch_size = 128
-        weight_decay = 1
 
         encodernet = ArtificialNeuralNetwork(
-            dims=(784, 128, 128, 2*latent_dim),
+            dims = (784, 128, 128, 2*latent_dim),
             activation_funcs = [LeakyReLu(), LeakyReLu(), LeakyReLu()], 
-            loss=(VAEInternal(latent_dim=latent_dim, reg_weight_update=reg_weight_update)), # TODO write custom class for this
-            seed=None,
-            version_num=0
+            loss = (VAEInternal(latent_dim=latent_dim, reg_weight_update=reg_weight_update)),
+            seed = None,
+            version_num = 0
         )
         decodernet = ArtificialNeuralNetwork(
-            dims=(latent_dim, 128, 128, 784),
+            dims = (latent_dim, 128, 128, 784),
             activation_funcs = [LeakyReLu(), LeakyReLu(), Sigmoid()], 
-            loss=(MSE()), 
-            seed=None,
-            version_num=1
+            loss = MSE(), 
+            seed = None,
+            version_num = 1
         )
         vae = VariationalAutoEncoder(
-            encodernet=encodernet,
-            decodernet=decodernet
+            encodernet = encodernet,
+            decodernet = decodernet
         )
 
-        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate} with reg_weight_update={reg_weight_update}')
+        # set the optimizer
+        optimizer = SGD(
+            learning_rate = 0.01,
+            weight_decay = 1
+        )
+
+        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={optimizer.learning_rate} with reg_weight_update={reg_weight_update}')
         start = time()
-        vae.train(
+        train_vae(
+            model=vae,
             train_data=x_train, 
             train_labels=x_train,
             valid_data=x_valid,
             valid_labels=x_valid,
             batch_size=batch_size, 
-            learning_rate=learning_rate, 
-            weight_decay=weight_decay,
             epochs=epochs, 
+            optimizer=optimizer,
             verbose=True,
             plot_learning=True
         )

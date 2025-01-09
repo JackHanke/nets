@@ -3,6 +3,6 @@ __pychache__
 
 # saved datasets except scripts
 datasets/*
-!datasets/*/dataload.py
+!datasets/*/*.py
 
 models/*/saves

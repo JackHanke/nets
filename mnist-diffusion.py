@@ -1,56 +1,33 @@
 from models.ann.ann import ArtificialNeuralNetwork
-from models.diffusion.diffusion import Diffusion
+from models.diffusion.diffusion import Diffusion, train_diff
 from functions.activation_funcs import *
 from functions.loss_funcs import *
 from functions.anim_funcs import *
+from functions.optimizers import *
 import numpy as np
 from time import time
 from datasets.mnist.dataload import get_mnist_data
 import matplotlib.pyplot as plt
 import pickle
 
-def get_and_encode_mnist(ae_path):
-    x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
-        train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
-        train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
-        test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
-        test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-    )
-    train_data = ((2*x_train)-1)
-    path_str = f'datasets/mnist/mnist-xtrain.pkl'
-    with open(path_str, 'wb') as f:
-        pickle.dump(train_data, file=f)
-
-    with open(ae_path, 'rb') as f:
-        ae = pickle.load(f)
-
-    # encoded_x_train = ae.encode(activation=x_train)
-    encoded_x_train = ae.encode(activation=x_train)
-
-    path_str = f'datasets/mnist/vae-encoded-mnist.pkl'
-    with open(path_str, 'wb') as f:
-        pickle.dump(encoded_x_train, file=f)
-
-    path_str = f'datasets/mnist/encoded-mnist-ytrain.pkl'
-    with open(path_str, 'wb') as f:
-        pickle.dump(y_train, file=f)
-
-    print(f'Data encoded.')
-
+# create denoising diffusion model for MNIST
 def mnist_diffusion(path=None):
     if path is None:
-        # with open(f'datasets/mnist/encoded-mnist.pkl', 'rb') as f:
         with open(f'datasets/mnist/vae-encoded-mnist.pkl', 'rb') as f:
             train_data = pickle.load(f)
         with open(f'datasets/mnist/encoded-mnist-ytrain.pkl', 'rb') as f:
             train_labels = pickle.load(f)
-
         print('MNIST data loaded in.')
 
         T, x_dim, y_dim, color_dim, condition_dim = 16, 8, 1, 1, 10
-        learning_rate = 1*(10**(-4))
         epochs = 150
         batch_size = 256
+
+        # set the optimizer
+        optimizer = SGD(
+            learning_rate = 1*(10**(-4)),
+            weight_decay = 1
+        )
 
         diff = Diffusion(
             dims=(train_data.shape[0]+condition_dim+T, 1000, 500, 500, train_data.shape[0]),
@@ -65,15 +42,15 @@ def mnist_diffusion(path=None):
             condition_dim=condition_dim
         )
 
-        print(f'Beginning training {diff.num_params()} parameters for {epochs} epochs at batch size {batch_size} at learning rate={learning_rate}')
+        print(f'Beginning training {diff.num_params()} parameters for {epochs} epochs at batch size {batch_size} at learning rate={optimizer.learning_rate}')
         start = time()
-        diff.train(
+        train_diff(
+            model=diff,
             train_data=train_data, 
             train_conditions=train_labels, 
             batch_size=batch_size, 
-            learning_rate=learning_rate, 
-            weight_decay=1,
             epochs=epochs,
+            optimizer=optimizer,
             verbose=True,
             plot_learning=True
         )
@@ -94,8 +71,8 @@ if __name__ == '__main__':
     with open(f'models/vae/saves/mnist_vae_{0}.pkl', 'rb') as f:
         ae = pickle.load(f)
 
-    # diff = mnist_diffusion(path=None)
-    diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+    diff = mnist_diffusion(path=None)
+    # diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
 
     vec_history = diff.gen(condition=6, return_history=True)
     # anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)

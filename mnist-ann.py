@@ -1,9 +1,10 @@
-from models.ann.ann import ArtificialNeuralNetwork
+from models.ann.ann import ArtificialNeuralNetwork, train_ann, test_ann
 from functions.activation_funcs import Sigmoid
 from functions.loss_funcs import MSE
 import numpy as np
 from time import time
 from datasets.mnist.dataload import get_mnist_data
+from functions.optimizers import *
 import pickle
 
 def mnist_benchmark(path=None):
@@ -18,31 +19,37 @@ def mnist_benchmark(path=None):
     if path is None: # if no network path is given
         # make new network 
         network = ArtificialNeuralNetwork(
-            dims=(784, 30, 10),
+            dims = (784, 30, 10),
             activation_funcs = [Sigmoid(), Sigmoid()], 
-            loss=(MSE()), 
-            seed=1,
-            version_num=0
+            loss = MSE(), 
+            seed = 1,
+            version_num = 0
+        )
+
+        # set the optimizer
+        optimizer = SGD(
+            learning_rate = 0.1,
+            weight_decay = 0.99999
         )
 
         # train on data with following parameters
-        learning_rate = 0.1
         epochs = 100
         batch_size = 128
 
-        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate = {learning_rate}')
+        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate = {optimizer.learning_rate}')
         start = time()
-        network.train(
-            train_data=x_train, 
-            train_labels=y_train,
-            valid_data=x_valid,
-            valid_labels=y_valid,
-            batch_size=batch_size, 
-            learning_rate=learning_rate, 
-            weight_decay=(1-(5*learning_rate)/(x_train.shape[1])),
-            epochs=epochs, 
-            verbose=True,
-            plot_learning=False
+        train_ann(
+            model = network,
+            train_data = x_train, 
+            train_labels = y_train,
+            valid_data = x_valid,
+            valid_labels = y_valid,
+            batch_size = batch_size, 
+            epochs = epochs,
+            optimizer = optimizer,
+            verbose = True,
+            plot_learning = False,
+            N=x_train.shape[1]
         )
         print(f'Training completed in {((time()-start)/60):.4f} minutes.')
         
@@ -57,7 +64,12 @@ def mnist_benchmark(path=None):
             network = pickle.load(f)
 
     # test performance
-    accuracy = network.test(test_data=x_test, test_labels=y_test, verbose=True)
+    accuracy = test_ann(
+        model = network,
+        test_data = x_test,
+        test_labels = y_test,
+        verbose = True
+    )
     print(f'Training resulted in network with {accuracy*100 :.4}% accuracy.')
     return accuracy
 
