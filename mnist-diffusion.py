@@ -97,7 +97,7 @@ if __name__ == '__main__':
     # diff = mnist_diffusion(path=None)
     diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
 
-    vec_history = diff.gen(condition=0, return_history=True)
+    vec_history = diff.gen(condition=6, return_history=True)
     # anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
 
     # encode inference

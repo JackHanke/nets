@@ -3,10 +3,11 @@ This repo hosts custom implementations of **Numpy-only** neural network architec
 - ✓ An artificial neural network (ANN)
     - ✓ Regularization (written as weight decay)
     - Isolate weight update and optimizer from gradient calculating process
-    - ADAM optimizer
+    - Variable learning rate support
+    - [ADAM optimizer](https://arxiv.org/pdf/1412.6980)
+    - GPU-ify with [CuPy](https://cupy.dev/)
     - Dropout
     - Automatic differentiation
-    - GPU-ify with [CuPy](https://cupy.dev/)
 - ✓ Autoencoder
 - ✓ Variational autoencoder
 - ✓ Latent Denoising diffusion model
