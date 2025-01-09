@@ -22,7 +22,7 @@ def mnist_vae(path=None):
         # hyperparams
         latent_dim = 8
         reg_weight_update = 0.00001
-        epochs = 1000
+        epochs = 150
         batch_size = 128
 
         encodernet = ArtificialNeuralNetwork(
@@ -44,13 +44,27 @@ def mnist_vae(path=None):
             decodernet = decodernet
         )
 
-        # set the optimizer
-        optimizer = SGD(
-            learning_rate = 0.01,
-            weight_decay = 1
+        # encoder_optimizer = SGD(
+        #     learning_rate = 0.01,
+        #     weight_decay = 0.9999
+        # )
+
+        # decoder_optimizer = SGD(
+        #     learning_rate = 0.01,
+        #     weight_decay = 0.9999
+        # )
+
+        encoder_optimizer = ADAM(
+            weights=encodernet.weights,
+            biases=encodernet.biases
         )
 
-        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate={optimizer.learning_rate} with reg_weight_update={reg_weight_update}')
+        decoder_optimizer = ADAM(
+            weights=decodernet.weights,
+            biases=decodernet.biases
+        )
+
+        print(f'Beginning training for {epochs} epochs at batch size {batch_size} with reg_weight_update={reg_weight_update}')
         start = time()
         train_vae(
             model=vae,
@@ -60,7 +74,8 @@ def mnist_vae(path=None):
             valid_labels=x_valid,
             batch_size=batch_size, 
             epochs=epochs, 
-            optimizer=optimizer,
+            encoder_optimizer=encoder_optimizer,
+            decoder_optimizer=decoder_optimizer,
             verbose=True,
             plot_learning=True
         )

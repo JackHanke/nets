@@ -31,7 +31,7 @@ def mnist_benchmark(path=None):
         # optimizer = SGD(
         #     learning_rate = 0.1,
         #     weight_decay = 0.99999
-        # )
+        # ) 
         # print(f'Optimizer ')
 
         optimizer = ADAM(

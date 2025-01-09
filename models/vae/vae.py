@@ -3,7 +3,7 @@ from time import time
 import matplotlib.pyplot as plt
 
 # example training script for VAE
-def train_vae(model, train_data, train_labels, valid_data, valid_labels, batch_size, epochs, optimizer, verbose=False, plot_learning=False, N=None):
+def train_vae(model, train_data, train_labels, valid_data, valid_labels, batch_size, epochs, encoder_optimizer, decoder_optimizer, verbose=False, plot_learning=False, N=None):
     train_cost_history, valid_cost_history = [], []
     if N is not None: N = train_data.shape[1]
     for epoch in range(epochs):
@@ -18,14 +18,14 @@ def train_vae(model, train_data, train_labels, valid_data, valid_labels, batch_s
                 label = labels_batch
             )
 
-            optimizer.step(
+            decoder_optimizer.step(
                 weights = model.decodernet.weights, 
                 weights_gradients = model.decodernet.weights_gradients,
                 biases = model.decodernet.biases,
                 biases_gradients = model.decodernet.biases_gradients
             )
 
-            optimizer.step(
+            encoder_optimizer.step(
                 weights = model.encodernet.weights, 
                 weights_gradients = model.encodernet.weights_gradients,
                 biases = model.encodernet.biases,
@@ -110,7 +110,8 @@ class VariationalAutoEncoder:
             epsilon = epsilon
         )
 
-        return rec_cost + reg_cost
+        # return rec_cost + reg_cost
+        return rec_cost
 
     def encode(self, activation, noise=None):
         params_vec = self.encodernet._forward(activation, include=False)
