@@ -27,16 +27,23 @@ def mnist_benchmark(path=None):
         )
 
         # set the optimizer
-        optimizer = SGD(
-            learning_rate = 0.1,
-            weight_decay = 0.99999
+
+        # optimizer = SGD(
+        #     learning_rate = 0.1,
+        #     weight_decay = 0.99999
+        # )
+        # print(f'Optimizer ')
+
+        optimizer = ADAM(
+            weights=network.weights,
+            biases=network.biases
         )
 
         # train on data with following parameters
         epochs = 100
         batch_size = 128
 
-        print(f'Beginning training for {epochs} epochs at batch size {batch_size} at learning rate = {optimizer.learning_rate}')
+        print(f'Beginning training for {epochs} epochs at batch size {batch_size}')
         start = time()
         train_ann(
             model = network,

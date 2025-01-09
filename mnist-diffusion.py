@@ -23,12 +23,6 @@ def mnist_diffusion(path=None):
         epochs = 150
         batch_size = 256
 
-        # set the optimizer
-        optimizer = SGD(
-            learning_rate = 1*(10**(-4)),
-            weight_decay = 1
-        )
-
         diff = Diffusion(
             dims=(train_data.shape[0]+condition_dim+T, 1000, 500, 500, train_data.shape[0]),
             activation_funcs = [TanH(), TanH(), TanH(), Identity()], 
@@ -40,6 +34,12 @@ def mnist_diffusion(path=None):
             y_dim=y_dim,
             color_dim=color_dim,
             condition_dim=condition_dim
+        )
+
+        # set the optimizer
+        optimizer = SGD(
+            learning_rate = 1*(10**(-4)),
+            weight_decay = 1
         )
 
         print(f'Beginning training {diff.num_params()} parameters for {epochs} epochs at batch size {batch_size} at learning rate={optimizer.learning_rate}')
@@ -71,10 +71,10 @@ if __name__ == '__main__':
     with open(f'models/vae/saves/mnist_vae_{0}.pkl', 'rb') as f:
         ae = pickle.load(f)
 
-    diff = mnist_diffusion(path=None)
-    # diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+    # diff = mnist_diffusion(path=None)
+    diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
 
-    vec_history = diff.gen(condition=6, return_history=True)
+    vec_history = diff.gen(condition=0, return_history=True)
     # anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
 
     # encode inference
