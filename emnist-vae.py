@@ -10,26 +10,27 @@ import pickle
 
 # creates variational autoencoder for EMNIST
 def emnist_vae(path=None):
-    x_train, y_train = get_emnist_data(path='./datasets/emnist/emnist-byclass.mat')
+    # x_train, y_train = get_emnist_data(path='./datasets/emnist/emnist-byclass.mat')
+    x_train, y_train = get_emnist_data(path='./datasets/emnist/emnist-letters.mat')
     print(f'{x_train.shape[1]} rows of EMNIST data loaded in.')
 
     if path is None:
         # hyperparams
-        latent_dim = 8
+        latent_dim = 16
         reg_weight_update = 0.00001
-        epochs = 30
+        epochs = 400
         batch_size = 256
 
         encodernet = ArtificialNeuralNetwork(
             dims = (784, 256, 128, 2*latent_dim),
-            activation_funcs = [TanH(), TanH(), LeakyReLu()], 
+            activation_funcs = [LeakyReLu(), LeakyReLu(), LeakyReLu()], 
             loss = (VAEInternal(latent_dim=latent_dim, reg_weight_update=reg_weight_update)),
             seed = None,
             version_num = 0
         )
         decodernet = ArtificialNeuralNetwork(
             dims = (latent_dim, 128, 256, 784),
-            activation_funcs = [TanH(), TanH(), Sigmoid()], 
+            activation_funcs = [LeakyReLu(), LeakyReLu(), Sigmoid()], 
             loss = MSE(), 
             seed = None,
             version_num = 1
@@ -38,16 +39,6 @@ def emnist_vae(path=None):
             encodernet = encodernet,
             decodernet = decodernet
         )
-
-        # encoder_optimizer = SGD(
-        #     learning_rate = 0.01,
-        #     weight_decay = 0.9999
-        # )
-
-        # decoder_optimizer = SGD(
-        #     learning_rate = 0.01,
-        #     weight_decay = 0.9999
-        # )
 
         encoder_optimizer = ADAM(
             weights=encodernet.weights,

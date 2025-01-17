@@ -7,25 +7,26 @@ from functions.optimizers import *
 import numpy as np
 from time import time
 from datasets.emnist.dataload import get_emnist_data
+from preprocessing import get_and_encode_emnist
 import matplotlib.pyplot as plt
 import pickle
 
 # create denoising diffusion model for EMNIST
 def emnist_diffusion(path=None):
     if path is None:
-        with open(f'datasets/mnist/vae-encoded-emnist.pkl', 'rb') as f:
+        with open(f'datasets/emnist/vae-encoded-emnist.pkl', 'rb') as f:
             train_data = pickle.load(f)
-        with open(f'datasets/mnist/emnist-ytrain.pkl', 'rb') as f:
+        with open(f'datasets/emnist/emnist-ytrain.pkl', 'rb') as f:
             train_labels = pickle.load(f)
-        print('EMNIST data loaded in.')
+        print(f'EMNIST data loaded in. train_data.shape={train_data.shape} train_labels.shape={train_labels.shape}')
 
-        T, x_dim, y_dim, color_dim, condition_dim = 16, 8, 1, 1, 62
+        T, x_dim, y_dim, color_dim, condition_dim = 50, 16, 1, 1, train_labels.shape[0]
         epochs = 150
         batch_size = 256
 
         diff = Diffusion(
-            dims=(train_data.shape[0]+condition_dim+T, 1000, 500, 500, train_data.shape[0]),
-            activation_funcs = [TanH(), TanH(), TanH(), Identity()], 
+            dims=(train_data.shape[0]+condition_dim+T, 500, 500, 500, train_data.shape[0]),
+            activation_funcs = [LeakyReLu(), LeakyReLu(), LeakyReLu(), Identity()], 
             loss=(MSE()), 
             seed=None,
             version_num=0,
@@ -36,18 +37,12 @@ def emnist_diffusion(path=None):
             condition_dim=condition_dim
         )
 
-        # set the optimizer
-        optimizer = SGD(
-            learning_rate = 1*(10**(-4)),
-            weight_decay = 1
-        )
-
         optimizer = ADAM(
             weights=diff.weights,
             biases=diff.biases
         )
 
-        print(f'Beginning training {diff.num_params()} parameters for {epochs} epochs at batch size {batch_size} at learning rate={optimizer.learning_rate}')
+        print(f'Beginning training {diff.num_params()} parameters for {epochs} epochs at batch size {batch_size}')
         start = time()
         train_diff(
             model=diff,
@@ -70,15 +65,15 @@ def emnist_diffusion(path=None):
 if __name__ == '__main__':
     # ae_path = f'models/ae/saves/mnist_ae_{0}.pkl'
     ae_path = f'models/vae/saves/emnist_vae_{0}.pkl'
-    get_and_encode_mnist(ae_path=ae_path)
+    # get_and_encode_mnist(ae_path=ae_path)
+    get_and_encode_emnist(ae_path=ae_path)
 
 
-    # get autoencoder
-    # with open(f'models/vae/saves/mnist_vae_{0}.pkl', 'rb') as f:
-    #     ae = pickle.load(f)
+    with open(f'models/vae/saves/mnist_vae_{0}.pkl', 'rb') as f:
+        ae = pickle.load(f)
 
-    diff = mnist_diffusion(path=None)
-    # diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+    # diff = emnist_diffusion(path=None)
+    diff = emnist_diffusion(path=f'models/diffusion/saves/emnist_diffusion_{0}.pkl')
 
     vec_history = diff.gen(condition=0, return_history=True)
     # anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)

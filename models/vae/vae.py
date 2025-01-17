@@ -1,6 +1,7 @@
 import numpy as np
 from time import time
 import matplotlib.pyplot as plt
+import pickle
 
 # example training script for VAE
 def train_vae(model, train_data, train_labels, valid_data, valid_labels, batch_size, epochs, encoder_optimizer, decoder_optimizer, verbose=False, plot_learning=False, N=None):
@@ -43,6 +44,13 @@ def train_vae(model, train_data, train_labels, valid_data, valid_labels, batch_s
             print(f'Training cost after epoch {epoch} = {train_cost:.6f}. Completed in {end-start:.4f}s') 
             if valid_data is not None: print(f'Validation cost after epoch {epoch} = {validation_cost:.6f}') 
     
+        if epoch % 10 == 9:
+            # TODO fix this 
+            path_str = f'models/vae/saves/emnist_vae_{model.version_num}.pkl'
+            with open(path_str, 'wb') as f:
+                pickle.dump(model, file=f)
+            print(f'Model saved at: {path_str}')
+
         if plot_learning and (epoch % 3) == 0: # plot learning curves
             plt.plot([i for i in range(1, len(train_cost_history)+1)], train_cost_history, label=f'Train')
             if valid_data is not None:  plt.plot([i for i in range(1, len(valid_cost_history)+1)], valid_cost_history, label=f'Validation')

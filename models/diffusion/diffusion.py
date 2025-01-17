@@ -54,8 +54,9 @@ def train_diff(model, train_data, train_conditions, batch_size, epochs, optimize
         if verbose and (epoch % 1) == 0: 
             print(f'Training cost after epoch {epoch} = {train_cost}. Completed in {end-start:.4f}s') 
 
-        if epoch % 5 == 4:
-            path_str = f'models/diffusion/saves/mnist_diffusion_{model.version_num}.pkl'
+        if epoch % 10 == 9:
+            # TODO fix this 
+            path_str = f'models/diffusion/saves/emnist_diffusion_{model.version_num}.pkl'
             with open(path_str, 'wb') as f:
                 pickle.dump(model, file=f)
             print(f'Model saved at: {path_str}')
@@ -91,7 +92,7 @@ class Diffusion(ArtificialNeuralNetwork):
         self.condition_dim = condition_dim # dimension of condition vector
         self.tot_dim = self.tot_data_dim + self.condition_dim
         self.pred_data = pred_data # boolean on whether the neural network should predict the source image or the source noise
-        self.betas = np.linspace(start=1e-4, stop=2e-1, num=self.T+1) # noise schedule
+        self.betas = np.linspace(start=1e-4, stop=1e-1, num=self.T+1) # noise schedule
         self.alphas = 1. - self.betas
         self.alpha_bars = np.cumprod(self.alphas, axis=-1)
 

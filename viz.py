@@ -1,4 +1,5 @@
 from datasets.mnist.dataload import get_mnist_data
+from datasets.emnist.dataload import get_emnist_data
 from functions.anim_funcs import *
 import pickle
 
@@ -12,12 +13,16 @@ def add_noise(im, noise, alpha):
 
 # visualizes multiple input, output pairs of a given autoencoder
 def visualize_input_output(ae):
-    x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
-        train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
-        train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
-        test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
-        test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
-    )
+    # x_train, y_train, x_valid, y_valid, x_test, y_test = get_mnist_data(
+    #     train_im_path='./datasets/mnist/train-images-idx3-ubyte/train-images-idx3-ubyte',
+    #     train_labels_path='./datasets/mnist/train-labels-idx1-ubyte/train-labels-idx1-ubyte',
+    #     test_im_path='./datasets/mnist/t10k-images-idx3-ubyte/t10k-images-idx3-ubyte',
+    #     test_labels_path='./datasets/mnist/t10k-labels-idx1-ubyte/t10k-labels-idx1-ubyte'
+    # )
+
+    x_train, y_train = get_emnist_data(path='./datasets/emnist/emnist-letters.mat')
+
+
     print('MNIST data loaded in.')
     input_im_ttl = np.reshape(x_train[:, 0], (28*28,1))
     input_im_ttr = np.reshape(x_train[:, 1], (28*28,1))
@@ -178,13 +183,13 @@ def mess_with_ae_gen(ae, image, save=False):
     if save: plt.savefig('models/ae/ae-noisy-seven.png')
 
 if __name__ == '__main__':
-    path = f'models/ae/saves/mnist_ae_{0}.pkl'
-    with open(path, 'rb') as f:
-        ae = pickle.load(f)
-    path = f'models/vae/saves/mnist_vae_{0}.pkl'
+    # path = f'models/ae/saves/mnist_ae_{0}.pkl'
+    # with open(path, 'rb') as f:
+    #     ae = pickle.load(f)
+    path = f'models/vae/saves/emnist_vae_{0}.pkl'
     with open(path, 'rb') as f:
         vae = pickle.load(f)
 
-    # visualize_input_output(ae=ae)
+    visualize_input_output(ae=vae)
 
-    mnist_ae_extrap_anim(ae=ae, vae=vae)
+    # mnist_ae_extrap_anim(ae=ae, vae=vae)
