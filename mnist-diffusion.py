@@ -13,10 +13,10 @@ import pickle
 # create denoising diffusion model for MNIST
 def mnist_diffusion(path=None):
     if path is None:
-        with open(f'datasets/mnist/mnist-xtrain.pkl', 'rb') as f:
-            train_data = pickle.load(f)
-        # with open(f'datasets/mnist/vae-encoded-mnist.pkl', 'rb') as f:
+        # with open(f'datasets/mnist/mnist-xtrain.pkl', 'rb') as f:
         #     train_data = pickle.load(f)
+        with open(f'datasets/mnist/vae-encoded-emnist.pkl', 'rb') as f:
+            train_data = pickle.load(f)
         with open(f'datasets/mnist/encoded-mnist-ytrain.pkl', 'rb') as f:
             train_labels = pickle.load(f)
         print('MNIST data loaded in.')
@@ -78,8 +78,8 @@ if __name__ == '__main__':
     # with open(f'models/vae/saves/mnist_vae_{0}.pkl', 'rb') as f:
     #     ae = pickle.load(f)
 
-    # diff = mnist_diffusion(path=None)
-    diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
+    diff = mnist_diffusion(path=None)
+    # diff = mnist_diffusion(path=f'models/diffusion/saves/mnist_diffusion_{0}.pkl')
 
     vec_history = diff.gen(condition=9, return_history=True)
     # anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)

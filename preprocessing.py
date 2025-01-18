@@ -52,26 +52,30 @@ def get_and_encode_mnist(ae_path):
 
     print(f'Data encoded.')
 
+def get_emnist_data(path=None):
+    # original = pd.read_csv(f'./datasets/emnist/emnist-letters-train.csv').to_numpy().transpose()
+    # data = original[1:]/255 
+    # labels = original[0]
+    # conds = np.zeros((26, data.shape[1]))
+    # for ind, label in enumerate(labels):
+    #     conds[label-1][ind] = 1
+    # print(f'Data shape loaded in {data.shape}')
 
-def get_emnist_data(path):
-    mat = scipy.io.loadmat(path, squeeze_me=True)
+    path_str = f'datasets/emnist/emnist_train.pkl'
+    with open(path_str, 'rb') as f:
+        x_train = pickle.load(f)
 
-    # NOTE so ratchet
-    x_train = mat['dataset'].item()[0].item()[0].transpose()/255
-    y_train = np.reshape(mat['dataset'].item()[0].item()[1], (-1,1))
-
-    max_val =  np.max(y_train)
-    min_val =  np.min(y_train)
-
-    temp_array = np.zeros((y_train.shape[0], max_val))
-    for index, val in enumerate(y_train):
-        temp_array[index][val-1] = 1
-    y_train = temp_array.transpose()
+    path_str = f'datasets/emnist/emnist_train_labels.pkl'
+    with open(path_str, 'rb') as f:
+        y_train = pickle.load(f)
 
     return x_train, y_train
 
 def get_and_encode_emnist(ae_path):
     x_train, y_train = get_emnist_data(path='./datasets/emnist/emnist-letters.mat')
+
+
+
     path_str = f'datasets/emnist/emnist-xtrain.pkl'
     with open(path_str, 'wb') as f:
         pickle.dump(x_train, file=f)

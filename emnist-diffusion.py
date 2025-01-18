@@ -14,13 +14,17 @@ import pickle
 # create denoising diffusion model for EMNIST
 def emnist_diffusion(path=None):
     if path is None:
-        with open(f'datasets/emnist/vae-encoded-emnist.pkl', 'rb') as f:
+        # train_data, train_labels = get_emnist_data(path=None)
+        path_str = f'datasets/emnist/vae-encoded-emnist.pkl'
+        with open(path_str, 'rb') as f:
             train_data = pickle.load(f)
-        with open(f'datasets/emnist/emnist-ytrain.pkl', 'rb') as f:
+
+        path_str = f'datasets/emnist/emnist-ytrain.pkl'
+        with open(path_str, 'rb') as f:
             train_labels = pickle.load(f)
         print(f'EMNIST data loaded in. train_data.shape={train_data.shape} train_labels.shape={train_labels.shape}')
 
-        T, x_dim, y_dim, color_dim, condition_dim = 50, 16, 1, 1, train_labels.shape[0]
+        T, x_dim, y_dim, color_dim, condition_dim = 50, 16, 1, 1, 37
         epochs = 150
         batch_size = 256
 
@@ -64,18 +68,17 @@ def emnist_diffusion(path=None):
 
 if __name__ == '__main__':
     # ae_path = f'models/ae/saves/mnist_ae_{0}.pkl'
-    ae_path = f'models/vae/saves/emnist_vae_{0}.pkl'
     # get_and_encode_mnist(ae_path=ae_path)
-    get_and_encode_emnist(ae_path=ae_path)
+    # ae_path = f'models/vae/saves/emnist_vae_{0}.pkl'
+    # get_and_encode_emnist(ae_path=ae_path)
 
-
-    with open(f'models/vae/saves/mnist_vae_{0}.pkl', 'rb') as f:
+    with open(f'models/vae/saves/emnist_vae_{0}.pkl', 'rb') as f:
         ae = pickle.load(f)
 
     # diff = emnist_diffusion(path=None)
     diff = emnist_diffusion(path=f'models/diffusion/saves/emnist_diffusion_{0}.pkl')
 
-    vec_history = diff.gen(condition=0, return_history=True)
+    vec_history = diff.gen(condition=2, return_history=True)
     # anim_ims(arr=vec_history, save_path=f'models/diffusion/anim3.gif', fps=8, show=False)
 
     # encode inference
@@ -87,7 +90,7 @@ if __name__ == '__main__':
         im = np.reshape(im, (28, 28))
         history.append(im)
 
-    history += [im for _ in range(12)]
+    history += [im for _ in range(24)]
 
-    anim_ims(arr=history, save_path=f'models/diffusion/anim-letter.gif', fps=4, show=False)
+    anim_ims(arr=history, save_path=f'models/diffusion/anim-letter.gif', fps=8, show=False)
 

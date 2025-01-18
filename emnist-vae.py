@@ -10,8 +10,8 @@ import pickle
 
 # creates variational autoencoder for EMNIST
 def emnist_vae(path=None):
-    # x_train, y_train = get_emnist_data(path='./datasets/emnist/emnist-byclass.mat')
-    x_train, y_train = get_emnist_data(path='./datasets/emnist/emnist-letters.mat')
+    x_train, y_train = get_emnist_data(path=None)
+
     print(f'{x_train.shape[1]} rows of EMNIST data loaded in.')
 
     if path is None:
@@ -63,7 +63,7 @@ def emnist_vae(path=None):
             encoder_optimizer=encoder_optimizer,
             decoder_optimizer=decoder_optimizer,
             verbose=True,
-            plot_learning=True
+            plot_learning=False
         )
         print(f'Training completed in {((time()-start)/60):.4f} minutes.')
         

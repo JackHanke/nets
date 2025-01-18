@@ -182,14 +182,134 @@ def mess_with_ae_gen(ae, image, save=False):
     plt.show()
     if save: plt.savefig('models/ae/ae-noisy-seven.png')
 
+def draw_sentence(diff, ae, sentence_string):
+    letter_map = {
+        'A': 0,
+        'B': 1,
+        'C': 2,
+        'D': 3,
+        'E': 4,
+        'F': 5,
+        'G': 6,
+        'H': 7,
+        'I': 8,
+        'J': 9,
+        'K': 10,
+        'L': 11,
+        'M': 12,
+        'N': 13,
+        'O': 14,
+        'P': 15,
+        'Q': 16,
+        'R': 17,
+        'S': 18,
+        'T': 19,
+        'U': 20,
+        'V': 21,
+        'W': 22,
+        'X': 23,
+        'Y': 24,
+        'Z': 25,
+        'a': 26,
+        'b': 27,
+        'c': 2,
+        'd': 28,
+        'e': 29,
+        'f': 30,
+        'g': 31,
+        'h': 32,
+        'i': 8,
+        'j': 9,
+        'k': 10,
+        'l': 11,
+        'm': 12,
+        'n': 33,
+        'o': 14,
+        'p': 15,
+        'q': 34,
+        'r': 35,
+        's': 18,
+        't': 36,
+        'u': 20,
+        'v': 21,
+        'w': 22,
+        'x': 23,
+        'y': 24,
+        'z': 25,
+    }
+
+    # preprocess
+    max_length = max([len(word) for word in sentence_string.split()])
+    padding_nums = [max_length - len(word) for word in sentence_string.split()]
+
+    # generate images
+    full_history = [[]]
+    row_index = 0
+    for letter in sentence_string:
+        if letter == ' ':
+            row_index += 1
+            full_history.append([])
+        else:
+            if letter == '_':
+                vec_history = None
+            else:
+                letter_num = letter_map[letter]
+                vec_history = diff.gen(condition=letter_num, return_history=True)
+            full_history[row_index].append(vec_history)
+
+    # make frames for animation
+    anim_frames = []
+    for t in range(diff.T):
+        frame = []
+        for row_num, row in enumerate(full_history):
+            row_im = []
+            for letter_hist in row:
+                if letter_hist is None:
+                    im = np.zeros((28,28))
+                else:
+                    im = vae.decode(activation=letter_hist[t].transpose())
+                    im = np.reshape(im, (28, 28))
+                    im = np.flip(np.rot90(im, k=3), axis=1)
+                row_im.append(im)
+            # add row padding if there is need for padding
+            if padding_nums[row_num] != 0:
+                padding = np.zeros((28, 14*padding_nums[row_num]))
+                # print(padding.shape)
+                # print(row_im.shape)
+                # frame.append(np.hstack((padding, row_im, padding)))
+                row_im = [padding] + row_im + [padding]
+            frame.append(np.hstack(row_im))
+
+        anim_frames.append(np.vstack(frame))
+
+    anim_frames += [anim_frames[-1] for _ in range(48)]
+
+    anim_ims(arr=anim_frames, save_path=f'models/diffusion/{sentence_string}.gif', fps=8, show=False)
+
+
+    '''
+    I_love you_Kim
+    Neural_Networks from_Scratch
+    Hello Hankes
+    Hello Linkedin
+    Hey Dan
+    Hey Horgans
+    '''
+
 if __name__ == '__main__':
     # path = f'models/ae/saves/mnist_ae_{0}.pkl'
     # with open(path, 'rb') as f:
     #     ae = pickle.load(f)
+
+    # visualize_input_output(ae=vae)
+    # mnist_ae_extrap_anim(ae=ae, vae=vae)
+
     path = f'models/vae/saves/emnist_vae_{0}.pkl'
     with open(path, 'rb') as f:
         vae = pickle.load(f)
 
-    visualize_input_output(ae=vae)
+    path = f'models/diffusion/saves/emnist_diffusion_{0}.pkl'
+    with open(path, 'rb') as f:
+        diff = pickle.load(f)
 
-    # mnist_ae_extrap_anim(ae=ae, vae=vae)
+    draw_sentence(diff=diff, ae=vae, sentence_string=f'I_love you_Kim')
