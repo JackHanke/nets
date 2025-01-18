@@ -1,4 +1,7 @@
 # Neural Networks from Scratch
+
+![](./nnfromscratch.gif)
+
 This repo hosts custom implementations of **Numpy-only** neural network architectures. Implemented and planned architectures include: 
 - ✓ An artificial neural network (ANN)
     - ✓ Regularization (written as weight decay)

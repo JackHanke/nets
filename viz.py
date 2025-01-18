@@ -286,16 +286,6 @@ def draw_sentence(diff, ae, sentence_string):
 
     anim_ims(arr=anim_frames, save_path=f'models/diffusion/{sentence_string}.gif', fps=8, show=False)
 
-
-    '''
-    I_love you_Kim
-    Neural_Networks from_Scratch
-    Hello Hankes
-    Hello Linkedin
-    Hey Dan
-    Hey Horgans
-    '''
-
 if __name__ == '__main__':
     # path = f'models/ae/saves/mnist_ae_{0}.pkl'
     # with open(path, 'rb') as f:
@@ -312,4 +302,14 @@ if __name__ == '__main__':
     with open(path, 'rb') as f:
         diff = pickle.load(f)
 
-    draw_sentence(diff=diff, ae=vae, sentence_string=f'I_love you_Kim')
+
+    '''
+    I_love you_Kim
+    Neural_Networks from_Scratch
+    Hello Hankes
+    Hello Linkedin
+    Hey Dan
+    Hey Horgans
+    '''
+
+    draw_sentence(diff=diff, ae=vae, sentence_string=f'Hello Linkedin')
