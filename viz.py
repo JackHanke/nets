@@ -282,7 +282,7 @@ def draw_sentence(diff, ae, sentence_string):
 
         anim_frames.append(np.vstack(frame))
 
-    anim_frames += [anim_frames[-1] for _ in range(48)]
+    anim_frames += [anim_frames[-1] for _ in range(36)]
 
     anim_ims(arr=anim_frames, save_path=f'models/diffusion/{sentence_string}.gif', fps=8, show=False)
 
@@ -302,14 +302,4 @@ if __name__ == '__main__':
     with open(path, 'rb') as f:
         diff = pickle.load(f)
 
-
-    '''
-    I_love you_Kim
-    Neural_Networks from_Scratch
-    Hello Hankes
-    Hello Linkedin
-    Hey Dan
-    Hey Horgans
-    '''
-
-    draw_sentence(diff=diff, ae=vae, sentence_string=f'Hello Linkedin')
+    draw_sentence(diff=diff, ae=vae, sentence_string=f'Image Generation From Scratch')

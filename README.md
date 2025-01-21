@@ -44,9 +44,7 @@ Datasets used in this projects include:
 - Diffusion Model
     - Conditional image generation with a diffusion model from scratch on mnist
     - For Linkedin post:
-        - Generative AI from scratch! I wrote a latent denoising diffusion model with just NumPy to "draw" requested letters using the EMNIST dataset. This model architecture is used in modern image generators like Stable Diffusion and DALLE.
-
-        - For viz, have header with "Please draw a __.", and have it draw 1738 (ay).
+        - Generative AI from scratch! I wrote a latent denoising diffusion model using just NumPy to "draw" requested letters using the EMNIST dataset. This is the exact model used in modern image generators like Stable Diffusion and DALLE.
 
 ## Notes
 For layers $2 \leq \ell \leq L$, a feed forward neural network is defined by
