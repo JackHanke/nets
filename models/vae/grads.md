@@ -1,4 +1,6 @@
-## Calculations
+# Calculations for VAE Gradients
+
+## Usual Backpropagation
 
 For layers $2 \leq \ell \leq L$, a feed forward neural network is defined by
 
@@ -19,6 +21,8 @@ $$\delta^L = \nabla_a C \cdot \sigma'(z^L)$$
 $$\delta^{\ell} = ((w^{\ell+1})^{T}\delta^{\ell+1}) \cdot \sigma'(z^{\ell})$$
 $$\frac{\partial C}{\partial b_j^\ell} = \delta_j^{\ell}$$
 $$\frac{\partial C}{\partial w_{jk}^\ell} = a_k^{\ell-1}\delta_j^{\ell}$$
+
+## VAE Backpropagation
 
 For VAE's that consist of encoder $E$ and decoder $D$, we have the following loss function
 
