@@ -16,6 +16,7 @@ This repo hosts custom implementations of **Numpy-only** neural network architec
 - ✓ Latent Denoising diffusion model
     - Classifier free guidance
 - Convolutional neural network (CNN)
+- Generative adversarial network (GAN)
 - Transformer
     - Sentence-embedding model
     - Text-to-image model

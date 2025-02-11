@@ -14,6 +14,10 @@ class MSE:
     def cost(self, activation, label):
         return np.average(self.loss(activation, label))
 
+# TODO everything? or is this included 
+class BinaryCrossEntropy:
+    pass
+
 # TODO figure out why this doesnt work
 class CrossEntropy:
     def __init__(self):

@@ -140,7 +140,8 @@ def mnist_ae_extrap_anim(ae, vae):
 
         final_im_gen = np.hstack((gen_im_ae, padding0, gen_im_vae))
         final_im_latent = np.hstack((padding2, latent_ae, padding2, padding3, padding2, latent_vae, padding2))
-        final_im = np.vstack((final_im_gen, padding1, final_im_latent, padding1))
+        # final_im = np.vstack((final_im_gen, padding1, final_im_latent, padding1))
+        final_im = final_im_gen
         return final_im
 
     im_history = []
@@ -287,19 +288,22 @@ def draw_sentence(diff, ae, sentence_string):
     anim_ims(arr=anim_frames, save_path=f'models/diffusion/{sentence_string}.gif', fps=8, show=False)
 
 if __name__ == '__main__':
-    # path = f'models/ae/saves/mnist_ae_{0}.pkl'
-    # with open(path, 'rb') as f:
-    #     ae = pickle.load(f)
-
-    # visualize_input_output(ae=vae)
-    # mnist_ae_extrap_anim(ae=ae, vae=vae)
-
-    path = f'models/vae/saves/emnist_vae_{0}.pkl'
+    path = f'models/ae/saves/mnist_ae_{0}.pkl'
+    with open(path, 'rb') as f:
+        ae = pickle.load(f)
+    path = f'models/vae/saves/mnist_vae_{0}.pkl'
     with open(path, 'rb') as f:
         vae = pickle.load(f)
 
-    path = f'models/diffusion/saves/emnist_diffusion_{0}.pkl'
-    with open(path, 'rb') as f:
-        diff = pickle.load(f)
+    # visualize_input_output(ae=vae)
+    mnist_ae_extrap_anim(ae=ae, vae=vae)
 
-    draw_sentence(diff=diff, ae=vae, sentence_string=f'Image Generation From Scratch')
+    # path = f'models/vae/saves/emnist_vae_{0}.pkl'
+    # with open(path, 'rb') as f:
+    #     vae = pickle.load(f)
+
+    # path = f'models/diffusion/saves/emnist_diffusion_{0}.pkl'
+    # with open(path, 'rb') as f:
+    #     diff = pickle.load(f)
+
+    # draw_sentence(diff=diff, ae=vae, sentence_string=f'Image Generation From Scratch')

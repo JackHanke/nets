@@ -27,7 +27,7 @@ def anim_ims(arr, save_path, fps=10, show=False):
         if i % fps == 0: print( '.', end ='' )
         im.set_array(arr[i])
         # plt.title(f't={i} ({np.min(arr[i]):.2f}, {np.max(arr[i]):.2f})')
-        plt.title(f't = {i}')
+        # plt.title(f't = {i}')
         # plt.title(f'     Autoencoder                    Variational Autoencoder')
         return [im]
 
