@@ -11,12 +11,14 @@ This repo hosts custom implementations of **Numpy-only** neural network architec
     - GPU-ify with [CuPy](https://cupy.dev/)
     - Dropout
     - Automatic differentiation
+    - [Batch Normalization](https://en.wikipedia.org/wiki/Batch_normalization)
 - ✓ Autoencoder
 - ✓ Variational autoencoder
 - ✓ Latent Denoising diffusion model
     - Classifier free guidance
 - Convolutional neural network (CNN)
 - Generative adversarial network (GAN)
+    - Learn about [mode collapse](https://en.wikipedia.org/wiki/Mode_collapse)
 - Transformer
     - Sentence-embedding model
     - Text-to-image model
