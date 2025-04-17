@@ -59,3 +59,42 @@ class ConvolutionalNeuralNetwork(ArtificialNeuralNetwork):
 
     def num_params(self):
         pass
+
+if __name__ == '__main__':
+    mat = np.array(
+        [
+            [0,0,0,2,0],
+            [0,1,4,0,0],
+            [0,3,0,3,0],
+            [0,6,5,0,0],
+            [0,0,0,4,0]
+        ]
+    )
+
+    kernel = np.array(
+        [
+            [0,1,0],
+            [0,1,0],
+            [0,0,0]
+        ]
+    )
+
+    answer = np.array(
+        [
+            [1,4,2],
+            [4,4,3],
+            [9,5,3]
+        ]
+    )
+
+    def convolve(mat, kernel):
+        mat_i, mat_j = mat.shape
+        kernel_i, kernel_j = kernel.shape
+        answer = np.zeros((mat_i - kernel_i + 1, mat_j - kernel_j + 1))
+        for i in range(mat_i - kernel_i + 1):
+            for j in range(mat_j - kernel_j + 1):
+                answer[i][j] = 1
+
+        return answer
+
+    assert convolve(mat=mat, kernel=kernel) == answer
