@@ -15,8 +15,8 @@ if __name__ == '__main__':
 
     # parameter count to gpt version number
     def param_count_to_gpt_num(params):
-        return -0.334 + 0.679 * math.log(params/(10**7), 10)
+        return -0.334 + 0.679 * math.log(params/(10**6), 10)
 
-    params = 10**11
+    params = 10**9
     version = param_count_to_gpt_num(params=params)
     print(f'My language model has {params} parameters, which is analagous to GPT-{version:.3f}')
