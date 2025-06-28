@@ -16,12 +16,7 @@ This repo hosts custom implementations of **Numpy-only** neural network architec
 - ✓ Variational autoencoder
 - ✓ Latent Denoising diffusion model
     - Classifier free guidance
-- Convolutional neural network (CNN)
-- Generative adversarial network (GAN)
-    - Learn about [mode collapse](https://en.wikipedia.org/wiki/Mode_collapse)
-- Transformer
-    - Sentence-embedding model
-    - Text-to-image model
+- ✓ Multi Head Attention
 
 ## Datasets used for Benchmarking
 Datasets used in this projects include:

@@ -61,9 +61,32 @@ class Swish:
     
     def function(self, x):
         val = x*(1/(1+np.exp(-x)))
+        # TODO remove
         if np.isnan(np.sum(val)): input(x)
         # print((np.max(x), np.min(x)))
         return val
 
     def function_prime(self, x):
         return 0.5 + (x+np.sinh(x) /(4*np.square(np.cosh(0.5*x))))
+
+class SoftMax:
+    def __init__(self):
+        self.name = 'softmax'
+
+    # expects x to be of dimension (batch, row, axis to be summed over)
+    def function(self, x: np.array):
+        # numerical stability
+        m = np.max(x, axis=2, keepdims=True)
+
+        numerator = np.exp(x - m)
+        denominator = np.sum(numerator, axis=2, keepdims=True)
+        # numerator
+        val = numerator / denominator
+        return val
+
+    def function_prime(self, x: np.array):
+        # NOTE I'm not 100% sure of this
+        val = self.function(x) * (1 - self.function(x))
+        return val
+
+
